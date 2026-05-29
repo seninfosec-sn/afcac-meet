@@ -29,8 +29,9 @@ export async function POST(req: NextRequest) {
     .sign(SECRET);
 
   // Try to send email via Resend
+  const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
   const { error } = await resend.emails.send({
-    from: "Afcac-expo-meet <onboarding@resend.dev>",
+    from: `Afcac-expo-meet <${fromAddress}>`,
     to: email,
     subject: "Votre code de connexion Afcac-expo-meet",
     html: `
@@ -50,26 +51,24 @@ export async function POST(req: NextRequest) {
     `,
   });
 
-  // In development, always continue even if email fails (Resend test mode restriction)
-  if (error && !IS_DEV) {
-    return NextResponse.json(
-      { error: "Impossible d'envoyer le code. Vérifiez votre adresse email." },
-      { status: 500 }
-    );
-  }
-
-  if (error && IS_DEV) {
+  if (error) {
+    console.error("[Resend] Erreur envoi OTP:", JSON.stringify(error));
+    if (!IS_DEV) {
+      return NextResponse.json(
+        { error: "Impossible d'envoyer le code. Vérifiez votre adresse email." },
+        { status: 500 }
+      );
+    }
     console.log(`[DEV] OTP pour ${email} : ${otp}`);
   }
 
   const payload: Record<string, unknown> = { success: true };
-  // In development, expose the OTP in the response for easy testing
   if (IS_DEV) payload.dev_otp = otp;
 
   const response = NextResponse.json(payload);
   response.cookies.set("afcac_expo_meet_otp", otpToken, {
     httpOnly: true,
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     maxAge: 60 * 10,
