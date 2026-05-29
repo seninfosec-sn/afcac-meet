@@ -10,8 +10,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
   }
 
+  const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
   const { data, error } = await resend.emails.send({
-    from: "Afcac-expo-meet <onboarding@resend.dev>",
+    from: `Afcac-expo-meet <${fromAddress}>`,
     to,
     subject: `Invitation à une rencontre bilatérale — ${date} à ${time}`,
     html: `

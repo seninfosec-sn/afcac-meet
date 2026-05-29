@@ -130,11 +130,22 @@ export default function NouvellePage() {
 
     // Send invitation email for bilateral
     if (type === "bilateral") {
-      await fetch("/api/send-invitation", {
+      const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to: email, date, time, location: roomName, message }),
-      }).catch(() => {});
+      }).catch(() => null);
+
+      if (!mailRes || !mailRes.ok) {
+        let mailErr = "Réservation créée, mais l'email d'invitation n'a pas pu être envoyé.";
+        try {
+          const d = await mailRes?.json();
+          if (d?.error) mailErr = `Réservation créée. Email non envoyé : ${d.error}`;
+        } catch { /* ignore */ }
+        setError(mailErr);
+        refresh();
+        return;
+      }
     }
 
     refresh();
