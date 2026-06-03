@@ -148,9 +148,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand mb-4">
-            <span className="text-white text-2xl font-bold">A</span>
-          </div>
+          <img
+            src="/afcac_logo.png"
+            alt="AFCAC"
+            className="h-20 mx-auto mb-4 object-contain"
+          />
           <h1 className="text-2xl font-bold text-foreground">Afcac-expo-meet</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestion de réservations</p>
         </div>
