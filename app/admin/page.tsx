@@ -1,9 +1,10 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Users, DoorOpen, CheckCircle2, Clock, XCircle, CalendarDays, RefreshCw, ShieldCheck, TrendingUp, CalendarClock } from "lucide-react";
+import { Users, DoorOpen, CheckCircle2, Clock, XCircle, CalendarDays, RefreshCw, ShieldCheck, TrendingUp, CalendarClock, Download } from "lucide-react";
 import { Reservation } from "@/lib/data";
 import StatusBadge from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
+import * as XLSX from "xlsx";
 
 interface AdminUser { id: string; email: string; display_name: string; created_at: string; }
 interface AdminData { reservations: Reservation[]; users: AdminUser[]; }
@@ -42,6 +43,71 @@ export default function AdminPage() {
     });
     await fetchData();
     setUpdating(null);
+  }
+
+  function downloadReport() {
+    if (!data) return;
+    const { reservations, users } = data;
+    const now = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+
+    // ── Feuille 1 : Invitations bilatérales ──────────────────────────
+    const invitations = reservations
+      .filter(r => r.type === "bilateral")
+      .map(r => ({
+        "Titre":          r.title,
+        "Date":           r.date,
+        "Heure début":    r.startTime,
+        "Heure fin":      r.endTime,
+        "Lieu":           r.location,
+        "Initiateur":     r.creatorEmail ?? "—",
+        "Invité(e)":      r.inviteeEmail ?? "—",
+        "Statut":         r.status === "confirmed" ? "Confirmé"
+                        : r.status === "pending"   ? "En attente"
+                        : r.status === "proposed"  ? "Proposé"
+                        : "Annulé",
+      }));
+
+    // ── Feuille 2 : Salles occupées ──────────────────────────────────
+    const salles = reservations
+      .filter(r => r.type === "salle")
+      .map(r => ({
+        "Salle":          r.location,
+        "Titre":          r.title,
+        "Date":           r.date,
+        "Heure début":    r.startTime,
+        "Heure fin":      r.endTime,
+        "Organisateur":   r.creatorEmail ?? "—",
+        "Capacité":       r.capacity ?? "—",
+        "Statut":         r.status === "confirmed" ? "Confirmé"
+                        : r.status === "pending"   ? "En attente"
+                        : "Annulé",
+      }));
+
+    // ── Feuille 3 : Utilisateurs ─────────────────────────────────────
+    const utilisateurs = users.map(u => ({
+      "Nom":                u.display_name || "—",
+      "Email":              u.email,
+      "Réservations":       reservations.filter(r => r.creatorEmail === u.email || r.inviteeEmail === u.email).length,
+      "Date d'inscription": new Date(u.created_at).toLocaleDateString("fr-FR"),
+    }));
+
+    // ── Construction du classeur ─────────────────────────────────────
+    const wb = XLSX.utils.book_new();
+
+    const wsInv = XLSX.utils.json_to_sheet(invitations.length ? invitations : [{ "Info": "Aucune invitation" }]);
+    const wsSal = XLSX.utils.json_to_sheet(salles.length     ? salles     : [{ "Info": "Aucune réservation de salle" }]);
+    const wsUsr = XLSX.utils.json_to_sheet(utilisateurs.length ? utilisateurs : [{ "Info": "Aucun utilisateur" }]);
+
+    // Largeurs de colonnes automatiques
+    [wsInv, wsSal, wsUsr].forEach(ws => {
+      ws["!cols"] = Array(10).fill({ wch: 22 });
+    });
+
+    XLSX.utils.book_append_sheet(wb, wsInv, "Invitations");
+    XLSX.utils.book_append_sheet(wb, wsSal, "Salles occupées");
+    XLSX.utils.book_append_sheet(wb, wsUsr, "Utilisateurs");
+
+    XLSX.writeFile(wb, `rapport-afcac-${now.replace(/ /g, "-")}.xlsx`);
   }
 
   if (loading) return (
@@ -96,9 +162,18 @@ export default function AdminPage() {
             <p className="text-sm text-muted-foreground">Vue globale de toutes les réservations</p>
           </div>
         </div>
-        <button onClick={fetchData} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border px-4 py-2 rounded-lg transition-colors">
-          <RefreshCw className="w-4 h-4" /> Actualiser
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={downloadReport}
+            disabled={!data}
+            className="flex items-center gap-2 text-sm text-white bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+          >
+            <Download className="w-4 h-4" /> Télécharger le rapport
+          </button>
+          <button onClick={fetchData} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border px-4 py-2 rounded-lg transition-colors">
+            <RefreshCw className="w-4 h-4" /> Actualiser
+          </button>
+        </div>
       </div>
 
       {/* Stats cards */}
