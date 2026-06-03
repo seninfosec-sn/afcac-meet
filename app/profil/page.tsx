@@ -1,7 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Mail, Zap, Moon, LogOut, Pencil, CalendarDays, CheckCircle2, Clock } from "lucide-react";
+import { Bell, Mail, Zap, Moon, LogOut, CalendarDays, CheckCircle2, Clock } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import StatusBadge from "@/components/StatusBadge";
@@ -11,32 +11,35 @@ function Toggle({ defaultOn = true }: { defaultOn?: boolean }) {
   return (
     <button
       onClick={() => setOn(!on)}
-      className={cn(
-        "relative w-10 h-6 rounded-full transition-colors shrink-0",
-        on ? "bg-brand" : "bg-muted border border-border"
-      )}
+      className={cn("relative w-10 h-6 rounded-full transition-colors shrink-0", on ? "bg-brand" : "bg-muted border border-border")}
     >
-      <span className={cn(
-        "absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm",
-        on ? "translate-x-4" : "translate-x-0"
-      )} />
+      <span className={cn("absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm", on ? "translate-x-4" : "translate-x-0")} />
     </button>
   );
 }
 
+interface Me { name: string; email: string; avatarInitials: string; }
+
 export default function ProfilPage() {
   const router = useRouter();
   const { reservations } = useStore();
+  const [me, setMe] = useState<Me | null>(null);
+  const TODAY = new Date().toISOString().slice(0, 7); // YYYY-MM
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => r.ok ? r.json() : null).then(u => u && setMe(u));
+  }, []);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
     router.refresh();
   }
+
   const confirmed = reservations.filter(r => r.status === "confirmed").length;
-  const pending = reservations.filter(r => r.status === "pending").length;
-  const total = reservations.length;
-  const thisMonth = reservations.filter(r => r.date.startsWith("2026-03")).length;
+  const pending   = reservations.filter(r => r.status === "pending").length;
+  const total     = reservations.length;
+  const thisMonth = reservations.filter(r => r.date.startsWith(TODAY)).length;
 
   return (
     <div className="flex flex-col gap-[10px]">
@@ -50,16 +53,11 @@ export default function ProfilPage() {
         <div className="flex flex-col gap-[10px]">
           {/* Profile card */}
           <div className="bg-card rounded-2xl border border-border p-6">
-            <div className="flex items-start justify-between mb-5">
-              <div className="w-16 h-16 rounded-full bg-brand flex items-center justify-center text-white text-xl font-bold">
-                AD
-              </div>
-              <button className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
-                <Pencil className="w-4 h-4" />
-              </button>
+            <div className="w-16 h-16 rounded-full bg-brand flex items-center justify-center text-white text-xl font-bold mb-4">
+              {me?.avatarInitials ?? "??"}
             </div>
-            <h2 className="text-lg font-bold">Amadou Diallo</h2>
-            <p className="text-sm text-muted-foreground mt-0.5">amadou.diallo@exemple.sn</p>
+            <h2 className="text-lg font-bold">{me?.name ?? "—"}</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">{me?.email ?? "—"}</p>
             <span className="inline-flex items-center mt-3 px-2.5 py-1 rounded-full text-xs font-medium bg-brand-light text-brand border border-brand/20">
               Compte actif
             </span>
@@ -86,13 +84,8 @@ export default function ProfilPage() {
             </div>
           </div>
 
-          {/* Sign out */}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors font-medium px-1 py-0.5"
-          >
-            <LogOut className="w-4 h-4" />
-            Se déconnecter
+          <button onClick={handleLogout} className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors font-medium px-1 py-0.5">
+            <LogOut className="w-4 h-4" /> Se déconnecter
           </button>
         </div>
 
@@ -139,6 +132,9 @@ export default function ProfilPage() {
                     <td className="px-6 py-3.5"><StatusBadge status={r.status} /></td>
                   </tr>
                 ))}
+                {reservations.length === 0 && (
+                  <tr><td colSpan={4} className="px-6 py-8 text-center text-muted-foreground text-sm">Aucune activité</td></tr>
+                )}
               </tbody>
             </table>
           </div>

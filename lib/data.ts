@@ -17,6 +17,10 @@ export interface Reservation {
   // Server-side fields for bilateral invitations
   creatorEmail?: string;
   inviteeEmail?: string;
+  // Proposed reschedule by invitee
+  proposedDate?: string;
+  proposedTime?: string;
+  proposedEndTime?: string;
 }
 
 export interface Room {

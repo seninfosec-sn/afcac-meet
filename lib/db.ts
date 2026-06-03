@@ -30,6 +30,7 @@ function meetingToReservation(row: Record<string, unknown>): Reservation {
   const start     = new Date(row.slot_start_at as string);
   const end       = new Date(row.slot_end_at   as string);
 
+  const proposed = row.proposed_slot as { date: string; startTime: string; endTime: string } | null;
   return {
     id:         row.id as string,
     type:       "bilateral",
@@ -44,6 +45,9 @@ function meetingToReservation(row: Record<string, unknown>): Reservation {
     participants: invitee ? [invitee.name || invitee.email] : [],
     creatorEmail: initiator.email,
     inviteeEmail: invitee?.email,
+    proposedDate:    proposed?.date,
+    proposedTime:    proposed?.startTime,
+    proposedEndTime: proposed?.endTime,
   };
 }
 
@@ -149,6 +153,21 @@ export async function insertRoomReservation(data: {
 export async function updateMeetingStatus(id: string, status: string): Promise<boolean> {
   const r = await sql`
     UPDATE meeting_invites SET status = ${status}, updated_at = NOW()
+    WHERE id = ${id} RETURNING id
+  `;
+  return r.length > 0;
+}
+
+export async function proposeMeetingSlot(
+  id: string,
+  proposedDate: string,
+  proposedStartTime: string,
+  proposedEndTime: string
+): Promise<boolean> {
+  const slot = JSON.stringify({ date: proposedDate, startTime: proposedStartTime, endTime: proposedEndTime });
+  const r = await sql`
+    UPDATE meeting_invites
+    SET status = 'proposed', proposed_slot = ${slot}::jsonb, updated_at = NOW()
     WHERE id = ${id} RETURNING id
   `;
   return r.length > 0;
