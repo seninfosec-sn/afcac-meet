@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SignJWT } from "jose";
-import { Resend } from "resend";
+import { transporter, FROM } from "@/lib/mailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "afcac-expo-meet-super-secret-jwt-key-change-in-production-2026"
 );
@@ -21,38 +20,35 @@ export async function POST(req: NextRequest) {
 
   const otp = generateOtp();
 
-  // Store OTP in a signed cookie (expires in 10 minutes)
   const otpToken = await new SignJWT({ email, otp })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("10m")
     .sign(SECRET);
 
-  // Try to send email via Resend
-  const fromAddress = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-  const { error } = await resend.emails.send({
-    from: `Afcac-expo-meet <${fromAddress}>`,
-    to: email,
-    subject: "Votre code de connexion Afcac-expo-meet",
-    html: `
-      <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
-        <div style="background: #145847; padding: 20px 28px; border-radius: 10px 10px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">Afcac-expo-meet</h1>
-        </div>
-        <div style="background: white; padding: 32px 28px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
-          <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">Votre code de connexion :</p>
-          <div style="background: #f3faf7; border: 2px solid #145847; border-radius: 12px; padding: 20px; margin: 0 auto 24px; display: inline-block; min-width: 180px;">
-            <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #145847;">${otp}</span>
+  try {
+    await transporter.sendMail({
+      from: FROM,
+      to: email,
+      subject: "Votre code de connexion Afcac-expo-meet",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+          <div style="background: #145847; padding: 20px 28px; border-radius: 10px 10px 0 0; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">Afcac-expo-meet</h1>
           </div>
-          <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px;">Ce code expire dans <strong>10 minutes</strong>.</p>
-          <p style="color: #9ca3af; font-size: 12px; margin: 0;">Si vous n'avez pas demandé ce code, ignorez cet email.</p>
+          <div style="background: white; padding: 32px 28px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
+            <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">Votre code de connexion :</p>
+            <div style="background: #f3faf7; border: 2px solid #145847; border-radius: 12px; padding: 20px; margin: 0 auto 24px; display: inline-block; min-width: 180px;">
+              <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #145847;">${otp}</span>
+            </div>
+            <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px;">Ce code expire dans <strong>10 minutes</strong>.</p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">Si vous n'avez pas demandé ce code, ignorez cet email.</p>
+          </div>
         </div>
-      </div>
-    `,
-  });
-
-  if (error) {
-    console.error("[Resend] Erreur envoi OTP:", JSON.stringify(error));
+      `,
+    });
+  } catch (err) {
+    console.error("[Gmail] Erreur envoi OTP:", err);
     if (!IS_DEV) {
       return NextResponse.json(
         { error: "Impossible d'envoyer le code. Vérifiez votre adresse email." },
