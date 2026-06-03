@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
       subject: `Invitation à une rencontre bilatérale — ${date} à ${time}`,
       html: `
         <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
-          <div style="background: #145847; padding: 24px 32px; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">Afcac-expo-meet</h1>
-            <p style="color: #a7d4c6; margin: 4px 0 0; font-size: 13px;">Invitation à une rencontre bilatérale</p>
+          <div style="background: #145847; padding: 24px 32px; border-radius: 10px 10px 0 0; text-align: center;">
+            <img src="${appUrl}/afcac_logo.png" alt="AFCAC" style="height: 64px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto;" />
+            <p style="color: #a7d4c6; margin: 8px 0 0; font-size: 13px;">Invitation à une rencontre bilatérale</p>
           </div>
           <div style="background: white; padding: 32px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">

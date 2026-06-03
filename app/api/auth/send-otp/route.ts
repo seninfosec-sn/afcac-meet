@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
     .setExpirationTime("10m")
     .sign(SECRET);
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://afcac-meet-main.vercel.app";
+
   try {
     await transporter.sendMail({
       from: FROM,
@@ -34,7 +36,7 @@ export async function POST(req: NextRequest) {
       html: `
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
           <div style="background: #145847; padding: 20px 28px; border-radius: 10px 10px 0 0; text-align: center;">
-            <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">Afcac-expo-meet</h1>
+            <img src="${appUrl}/afcac_logo.png" alt="AFCAC" style="height: 64px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto;" />
           </div>
           <div style="background: white; padding: 32px 28px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
             <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">Votre code de connexion :</p>
