@@ -32,9 +32,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           const data = await res.json();
           setReservations(data);
         }
+      } else {
+        // Non authentifié ou session invalide — vide le store
+        setReservations([]);
       }
     } catch {
-      // Silently fail — user may not be authenticated yet
+      setReservations([]);
     } finally {
       setLoading(false);
     }

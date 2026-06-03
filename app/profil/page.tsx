@@ -32,8 +32,7 @@ export default function ProfilPage() {
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-    router.refresh();
+    window.location.replace("/login");
   }
 
   const confirmed = reservations.filter(r => r.status === "confirmed").length;

@@ -76,8 +76,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
-    router.refresh();
+    window.location.replace("/");
   }
 
   function handleOtpChange(index: number, value: string) {
@@ -117,8 +116,7 @@ export default function LoginPage() {
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
       return;
     }
-    router.push("/");
-    router.refresh();
+    window.location.replace("/");
   }
 
   async function handleResend() {
