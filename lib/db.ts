@@ -181,6 +181,22 @@ export async function updateRoomResStatus(id: string, status: string): Promise<b
   return r.length > 0;
 }
 
+export async function getAllReservations(): Promise<Reservation[]> {
+  const [meetings, rooms] = await Promise.all([
+    sql`SELECT * FROM meeting_invites ORDER BY slot_start_at DESC`,
+    sql`SELECT * FROM room_reservations ORDER BY slot_start_at DESC`,
+  ]);
+  return [
+    ...meetings.map(r => meetingToReservation(r as Record<string, unknown>)),
+    ...rooms.map(r => roomResToReservation(r as Record<string, unknown>)),
+  ].sort((a, b) => (b.date + b.startTime).localeCompare(a.date + a.startTime));
+}
+
+export async function getAllUsers(): Promise<{ id: string; email: string; display_name: string; created_at: string }[]> {
+  const rows = await sql`SELECT id, email, display_name, created_at FROM users ORDER BY created_at DESC`;
+  return rows as { id: string; email: string; display_name: string; created_at: string }[];
+}
+
 // Conflict check for room bookings
 export async function hasRoomConflict(
   roomId: string, slotStart: string, slotEnd: string

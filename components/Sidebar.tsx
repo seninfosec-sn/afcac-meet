@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Calendar, ClipboardList, Plus, User, Bell, LogOut } from "lucide-react";
+import { Calendar, ClipboardList, Plus, User, Bell, LogOut, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -11,6 +11,8 @@ const NAV = [
   { href: "/nouvelle", icon: Plus, label: "Nouvelle réservation" },
   { href: "/profil", icon: User, label: "Profil" },
 ];
+
+const ADMIN_EMAILS = ["seninfosec@gmail.com"];
 
 interface SessionUser {
   name: string;
@@ -48,14 +50,10 @@ export default function Sidebar() {
         {NAV.map(({ href, icon: Icon, label }) => {
           const active = path === href;
           return (
-            <Link
-              key={href}
-              href={href}
+            <Link key={href} href={href}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                active
-                  ? "bg-brand text-white"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                active ? "bg-brand text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
               <Icon className="w-4 h-4 shrink-0" />
@@ -63,6 +61,21 @@ export default function Sidebar() {
             </Link>
           );
         })}
+
+        {/* Admin link — visible uniquement pour les admins */}
+        {user && ADMIN_EMAILS.includes(user.email.toLowerCase()) && (
+          <Link href="/admin"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors mt-2 border",
+              path === "/admin"
+                ? "bg-brand text-white border-brand"
+                : "text-brand border-brand/30 hover:bg-brand-light"
+            )}
+          >
+            <ShieldCheck className="w-4 h-4 shrink-0" />
+            Panel Admin
+          </Link>
+        )}
       </nav>
 
       {/* Bottom — user + logout */}
