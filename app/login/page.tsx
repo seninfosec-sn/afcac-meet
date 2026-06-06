@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
 import { Loader2, Mail, ArrowRight, RotateCcw, CheckCircle2 } from "lucide-react";
 
 type Step = "email" | "otp";
@@ -115,15 +114,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left — banner */}
-      <div className="hidden lg:block relative flex-1">
-        <Image
+      <div className="hidden lg:flex relative flex-1 overflow-hidden">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/banner-expo.png"
           alt="AFCAC Expo"
-          fill
-          className="object-cover"
-          priority
+          className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/35" />
         <div className="absolute bottom-10 left-10 right-10">
           <p className="text-white/80 text-sm font-medium tracking-wide uppercase">
             15 – 19 juin 2026 · Dakar
@@ -141,14 +139,12 @@ export default function LoginPage() {
       <div className="flex flex-col items-center justify-center w-full lg:w-[480px] shrink-0 bg-background px-8 py-12">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Image
+          <div className="flex items-center justify-center mb-4 w-20 h-20 rounded-2xl bg-white border border-border shadow-sm p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/afcac_logo.png"
               alt="AFCAC"
-              width={80}
-              height={80}
-              className="object-contain"
-              priority
+              className="w-full h-full object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Afcac-expo-meet</h1>
