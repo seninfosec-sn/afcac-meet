@@ -1,10 +1,15 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import ReservationCard from "@/components/ReservationCard";
+import ReservationDetailModal from "@/components/ReservationDetailModal";
+import QRModal from "@/components/QRModal";
+import ProposeModal from "@/components/ProposeModal";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { Reservation } from "@/lib/data";
+import { toast } from "sonner";
 
 const DAYS = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
 const EXPO_START = 15;
@@ -12,8 +17,16 @@ const EXPO_END = 19;
 const CURRENT_MONTH = "2026-06";
 
 export default function CalendarPage() {
-  const { reservations } = useStore();
+  const { reservations, updateStatus } = useStore();
   const [selectedDay, setSelectedDay] = useState(EXPO_START);
+  const [detailReservation, setDetailReservation] = useState<Reservation | null>(null);
+  const [currentEmail, setCurrentEmail] = useState<string | null>(null);
+  const [proposingFromDetail, setProposingFromDetail] = useState<Reservation | null>(null);
+  const [qrFromDetail, setQrFromDetail] = useState<Reservation | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(r => r.ok ? r.json() : null).then(u => u && setCurrentEmail(u.email));
+  }, []);
 
   // Compute day statuses dynamically from reservations
   const dayStatuses = useMemo(() => {
@@ -158,7 +171,9 @@ export default function CalendarPage() {
             </p>
             {selectedResas.length > 0 ? (
               <div className="flex flex-col gap-[10px]">
-                {selectedResas.map(r => <ReservationCard key={r.id} reservation={r} />)}
+                {selectedResas.map(r => (
+                  <ReservationCard key={r.id} reservation={r} onClick={() => setDetailReservation(r)} />
+                ))}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
@@ -173,7 +188,11 @@ export default function CalendarPage() {
             {upcoming.length > 0 ? (
               <div className="flex flex-col">
                 {upcoming.map((r, i, arr) => (
-                  <div key={r.id} className={cn("flex items-center gap-3 py-2.5", i < arr.length - 1 && "border-b border-border")}>
+                  <div
+                    key={r.id}
+                    onClick={() => setDetailReservation(r)}
+                    className={cn("flex items-center gap-3 py-2.5 cursor-pointer hover:bg-muted/40 rounded-lg px-1 -mx-1 transition-colors", i < arr.length - 1 && "border-b border-border")}
+                  >
                     <div className={cn("w-2 h-2 rounded-full shrink-0", r.status === "confirmed" ? "bg-brand" : "bg-olive")} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.title}</p>
@@ -188,6 +207,47 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* Detail modal */}
+      {detailReservation && (
+        <ReservationDetailModal
+          reservation={detailReservation}
+          currentEmail={currentEmail}
+          onClose={() => setDetailReservation(null)}
+          onConfirm={async r => {
+            await updateStatus(r.id, "confirmed", "bilateral");
+            toast.success("Invitation confirmée", { description: `"${r.title}" est maintenant confirmé.` });
+          }}
+          onRefuse={async r => {
+            await updateStatus(r.id, "cancelled", "bilateral");
+            toast.info("Invitation refusée");
+          }}
+          onPropose={r => setProposingFromDetail(r)}
+          onQR={r => setQrFromDetail(r)}
+        />
+      )}
+
+      {/* Propose modal triggered from detail */}
+      {proposingFromDetail && (
+        <ProposeModal
+          reservation={proposingFromDetail}
+          onClose={() => setProposingFromDetail(null)}
+          onPropose={async (date, start, end) => {
+            await fetch(`/api/reservations/${proposingFromDetail.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "proposed", proposedDate: date, proposedStartTime: start, proposedEndTime: end, tableType: "bilateral" }),
+            });
+            toast.success("Créneau proposé", { description: `Proposition envoyée pour le ${date}.` });
+            setProposingFromDetail(null);
+          }}
+        />
+      )}
+
+      {/* QR modal triggered from detail */}
+      {qrFromDetail && (
+        <QRModal reservation={qrFromDetail} onClose={() => setQrFromDetail(null)} />
+      )}
     </div>
   );
 }

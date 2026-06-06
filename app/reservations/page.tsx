@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import QRModal from "@/components/QRModal";
 import ProposeModal from "@/components/ProposeModal";
+import ReservationDetailModal from "@/components/ReservationDetailModal";
 import { Reservation } from "@/lib/data";
 import { toast } from "sonner";
 
@@ -19,6 +20,7 @@ export default function ReservationsPage() {
   const [filter, setFilter] = useState("Toutes");
   const [selected, setSelected] = useState<Reservation | null>(null);
   const [proposing, setProposing] = useState<Reservation | null>(null);
+  const [detail, setDetail] = useState<Reservation | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me").then(r => r.ok ? r.json() : null).then(u => u && setCurrentEmail(u.email));
@@ -121,7 +123,11 @@ export default function ReservationsPage() {
           </thead>
           <tbody>
             {list.map((r, i, arr) => (
-              <tr key={r.id} className={cn("hover:bg-muted/30 transition-colors", i < arr.length - 1 && "border-b border-border")}>
+              <tr
+                key={r.id}
+                onClick={() => setDetail(r)}
+                className={cn("hover:bg-muted/30 transition-colors cursor-pointer", i < arr.length - 1 && "border-b border-border")}
+              >
                 <td className="px-5 py-3.5">
                   <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", r.type === "bilateral" ? "bg-brand-light" : "bg-olive-light")}>
                     {r.type === "bilateral" ? <Users className="w-4 h-4 text-brand" /> : <DoorOpen className="w-4 h-4 text-olive-dark" />}
@@ -132,7 +138,7 @@ export default function ReservationsPage() {
                 <td className="px-5 py-3.5 text-muted-foreground">{r.startTime} – {r.endTime}</td>
                 <td className="px-5 py-3.5 text-muted-foreground max-w-[180px] truncate">{r.location}</td>
                 <td className="px-5 py-3.5"><StatusBadge status={r.status} /></td>
-                <td className="px-5 py-3.5">{!dimmed && renderActions(r)}</td>
+                <td className="px-5 py-3.5" onClick={e => e.stopPropagation()}>{!dimmed && renderActions(r)}</td>
               </tr>
             ))}
             {list.length === 0 && (
@@ -236,6 +242,23 @@ export default function ReservationsPage() {
           reservation={proposing}
           onClose={() => setProposing(null)}
           onPropose={(date, start, end) => handlePropose(proposing, date, start, end)}
+        />
+      )}
+      {detail && (
+        <ReservationDetailModal
+          reservation={detail}
+          currentEmail={currentEmail}
+          onClose={() => setDetail(null)}
+          onConfirm={async r => {
+            await handleConfirm(r);
+            setDetail(null);
+          }}
+          onRefuse={async r => {
+            await handleRefuse(r);
+            setDetail(null);
+          }}
+          onPropose={r => { setDetail(null); setProposing(r); }}
+          onQR={r => { setDetail(null); setSelected(r); }}
         />
       )}
     </div>
