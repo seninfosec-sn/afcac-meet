@@ -112,34 +112,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left — banner */}
-      <div className="hidden lg:flex relative flex-1 overflow-hidden">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/banner-expo.png"
-          alt="AFCAC Expo"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/35" />
-        <div className="absolute bottom-10 left-10 right-10">
-          <p className="text-white/80 text-sm font-medium tracking-wide uppercase">
-            15 – 19 juin 2026 · Dakar
-          </p>
-          <h2 className="text-white text-3xl font-bold mt-1 leading-tight">
-            AFCAC Expo 2026
-          </h2>
-          <p className="text-white/70 text-sm mt-2">
-            Plateforme de gestion des réservations bilatérales
-          </p>
-        </div>
-      </div>
+    <div className="relative min-h-screen flex items-center justify-center p-4">
+      {/* Banner full cover */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/banner-expo.png"
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-black/50" />
 
-      {/* Right — form */}
-      <div className="flex flex-col items-center justify-center w-full lg:w-[480px] shrink-0 bg-background px-8 py-12">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4 w-20 h-20 rounded-2xl bg-white border border-border shadow-sm p-2">
+      {/* Centered form */}
+      <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
+        {/* Logo centré */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-white shadow-lg p-2 mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/afcac_logo.png"
@@ -147,8 +134,8 @@ export default function LoginPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Afcac-expo-meet</h1>
-          <p className="text-sm text-muted-foreground mt-1">Gestion de réservations</p>
+          <h1 className="text-2xl font-bold text-white">Afcac-expo-meet</h1>
+          <p className="text-sm text-white/70 mt-1">Gestion de réservations</p>
         </div>
 
         <div className="w-full max-w-sm bg-card rounded-2xl border border-border p-8 shadow-sm">
@@ -267,7 +254,7 @@ export default function LoginPage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center text-xs text-white/50 mt-6">
           Connexion sécurisée · Sans mot de passe
         </p>
       </div>
