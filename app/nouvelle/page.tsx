@@ -5,6 +5,7 @@ import { Users, DoorOpen, Check, Loader2, Wifi, Lock } from "lucide-react";
 import { ROOMS, Reservation } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ReservationType = "bilateral" | "salle";
 
@@ -160,6 +161,10 @@ export default function NouvellePage() {
     }
 
     refresh();
+    toast.success(
+      type === "bilateral" ? "Invitation envoyée !" : "Salle réservée !",
+      { description: type === "bilateral" ? `Un email a été envoyé à ${email}.` : `Votre réservation a été enregistrée.` }
+    );
     setSubmitted(true);
     setTimeout(() => router.push("/reservations"), 2000);
   }

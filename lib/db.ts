@@ -210,6 +210,87 @@ export async function deleteUser(id: string): Promise<boolean> {
   return r.length > 0;
 }
 
+// ── Notifications ────────────────────────────────────────────────
+
+export type NotificationType =
+  | "invitation"
+  | "confirmed"
+  | "cancelled"
+  | "proposed"
+  | "room_created";
+
+export interface AppNotification {
+  id: string;
+  user_email: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  reservation_id: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+async function ensureNotificationsTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS notifications (
+      id TEXT PRIMARY KEY,
+      user_email TEXT NOT NULL,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      reservation_id TEXT,
+      read BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+}
+
+export async function insertNotification(data: {
+  userEmail: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  reservationId?: string;
+}): Promise<void> {
+  await ensureNotificationsTable();
+  const id = `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  await sql`
+    INSERT INTO notifications (id, user_email, type, title, message, reservation_id)
+    VALUES (${id}, ${data.userEmail}, ${data.type}, ${data.title}, ${data.message}, ${data.reservationId ?? null})
+  `;
+}
+
+export async function getNotificationsForUser(email: string): Promise<AppNotification[]> {
+  await ensureNotificationsTable();
+  const rows = await sql`
+    SELECT * FROM notifications
+    WHERE user_email = ${email}
+    ORDER BY created_at DESC
+    LIMIT 50
+  `;
+  return rows as AppNotification[];
+}
+
+export async function markNotificationsRead(email: string, id?: string): Promise<void> {
+  await ensureNotificationsTable();
+  if (id) {
+    await sql`UPDATE notifications SET read = TRUE WHERE id = ${id} AND user_email = ${email}`;
+  } else {
+    await sql`UPDATE notifications SET read = TRUE WHERE user_email = ${email}`;
+  }
+}
+
+export async function getUnreadCount(email: string): Promise<number> {
+  await ensureNotificationsTable();
+  const rows = await sql`SELECT COUNT(*)::int AS cnt FROM notifications WHERE user_email = ${email} AND read = FALSE`;
+  return Number((rows[0] as { cnt: number }).cnt);
+}
+
+export async function getMeetingById(id: string) {
+  const rows = await sql`SELECT * FROM meeting_invites WHERE id = ${id} LIMIT 1`;
+  return rows[0] as Record<string, unknown> | undefined;
+}
+
 // Conflict check for room bookings
 export async function hasRoomConflict(
   roomId: string, slotStart: string, slotEnd: string

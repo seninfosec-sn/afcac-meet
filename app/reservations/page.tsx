@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import QRModal from "@/components/QRModal";
 import ProposeModal from "@/components/ProposeModal";
 import { Reservation } from "@/lib/data";
+import { toast } from "sonner";
 
 const FILTERS = ["Toutes", "Bilatérales", "Salles", "Confirmées", "En attente"];
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -47,9 +48,21 @@ export default function ReservationsPage() {
     await fetch(`/api/reservations/${r.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "proposed", proposedDate: date, proposedStartTime: startTime, proposedEndTime: endTime }),
+      body: JSON.stringify({ status: "proposed", proposedDate: date, proposedStartTime: startTime, proposedEndTime: endTime, tableType: "bilateral" }),
     });
-    await refresh();
+    toast.success("Créneau proposé", { description: `Votre proposition pour le ${date} a été envoyée.` });
+    refresh();
+    setProposing(null);
+  }
+
+  async function handleConfirm(r: Reservation) {
+    await updateStatus(r.id, "confirmed", "bilateral");
+    toast.success("Invitation confirmée", { description: `"${r.title}" est maintenant confirmé.` });
+  }
+
+  async function handleRefuse(r: Reservation) {
+    await updateStatus(r.id, "cancelled", "bilateral");
+    toast.info("Invitation refusée");
   }
 
   function renderActions(r: Reservation) {
@@ -64,13 +77,13 @@ export default function ReservationsPage() {
       return (
         <div className="flex items-center gap-1.5">
           <button
-            onClick={() => updateStatus(r.id, "confirmed", "bilateral")}
+            onClick={() => handleConfirm(r)}
             className="flex items-center gap-1 text-xs text-white bg-brand hover:bg-brand-dark px-2.5 py-1.5 rounded-lg transition-colors"
           >
             <Check className="w-3 h-3" /> Confirmer
           </button>
           <button
-            onClick={() => updateStatus(r.id, "cancelled", "bilateral")}
+            onClick={() => handleRefuse(r)}
             className="flex items-center gap-1 text-xs text-red-600 border border-red-200 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
           >
             <X className="w-3 h-3" /> Refuser
@@ -170,7 +183,7 @@ export default function ReservationsPage() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => updateStatus(r.id, "confirmed", "bilateral")}
+                    onClick={() => handleConfirm(r)}
                     className="flex items-center gap-1.5 text-sm text-white bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors font-medium"
                   >
                     <Check className="w-4 h-4" /> Confirmer
@@ -182,7 +195,7 @@ export default function ReservationsPage() {
                     <CalendarClock className="w-4 h-4" /> Proposer une date
                   </button>
                   <button
-                    onClick={() => updateStatus(r.id, "cancelled", "bilateral")}
+                    onClick={() => handleRefuse(r)}
                     className="flex items-center gap-1.5 text-sm text-red-600 border border-red-200 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors font-medium"
                   >
                     <X className="w-4 h-4" /> Refuser

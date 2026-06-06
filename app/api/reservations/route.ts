@@ -6,6 +6,7 @@ import {
   insertRoomReservation,
   hasRoomConflict,
   countRoomUsageForDay,
+  insertNotification,
 } from "@/lib/db";
 
 const EXPO_DATES = new Set(["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"]);
@@ -73,9 +74,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
+      const meetingTitle = title || `Rencontre avec ${inviteeEmail}`;
       await insertMeetingInvite({
         id,
-        title: title || `Rencontre avec ${inviteeEmail}`,
+        title: meetingTitle,
         description: description || "",
         initiatorEmail: user.email,
         initiatorName:  user.name,
@@ -85,6 +87,13 @@ export async function POST(req: NextRequest) {
         location: room && room !== "visio"
           ? { type: "room", name: location, roomId: room }
           : { type: "visio", name: location || "Visio" },
+      });
+      await insertNotification({
+        userEmail: inviteeEmail,
+        type: "invitation",
+        title: "Nouvelle invitation de réunion",
+        message: `${user.name} vous invite à "${meetingTitle}" le ${date} de ${startTime} à ${endTime}.`,
+        reservationId: id,
       });
     } else {
       if (!room) {
