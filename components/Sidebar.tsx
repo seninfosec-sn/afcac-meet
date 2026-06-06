@@ -110,7 +110,7 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
       {/* Logo */}
       <div className="px-6 py-6 border-b border-border flex items-center justify-between">
         <div>
-          <span className="text-xl font-bold text-brand tracking-tight">Afcac-expo-meet</span>
+          <span className="text-xl font-bold text-brand tracking-tight">OFFICIAL BILATERAL MEETINGS PLATFORM</span>
           <p className="text-xs text-muted-foreground mt-0.5">Gestion de réservations</p>
         </div>
         <button

@@ -19,7 +19,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <span className="ml-3 font-semibold text-sm text-brand">Afcac-expo-meet</span>
+        <span className="ml-3 font-semibold text-sm text-brand">OFFICIAL BILATERAL MEETINGS PLATFORM</span>
       </header>
 
       {/* Mobile overlay */}
