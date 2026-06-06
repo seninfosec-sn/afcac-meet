@@ -7,6 +7,7 @@ import {
   hasRoomConflict,
   countRoomUsageForDay,
   insertNotification,
+  isRoomLocked,
 } from "@/lib/db";
 
 const EXPO_DATES = new Set(["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"]);
@@ -64,14 +65,14 @@ export async function POST(req: NextRequest) {
       }
 
       if (room && room !== "visio") {
+        if (await isRoomLocked(room))
+          return NextResponse.json({ error: "Cette salle est verrouillée par l'administrateur." }, { status: 403 });
         const conflict = await hasRoomConflict(room, slotStart, slotEnd);
-        if (conflict) {
+        if (conflict)
           return NextResponse.json({ error: "Cette salle est déjà réservée sur ce créneau." }, { status: 409 });
-        }
         const dayCount = await countRoomUsageForDay(room, date);
-        if (dayCount >= MAX_SLOTS_PER_DAY) {
+        if (dayCount >= MAX_SLOTS_PER_DAY)
           return NextResponse.json({ error: "Cette salle a atteint le maximum de 13 réservations pour cette journée." }, { status: 409 });
-        }
       }
 
       const meetingTitle = title || `Rencontre avec ${inviteeEmail}`;
@@ -99,6 +100,9 @@ export async function POST(req: NextRequest) {
       if (!room) {
         return NextResponse.json({ error: "Salle requise" }, { status: 400 });
       }
+
+      if (await isRoomLocked(room))
+        return NextResponse.json({ error: "Cette salle est verrouillée par l'administrateur." }, { status: 403 });
 
       const conflict = await hasRoomConflict(room, slotStart, slotEnd);
       if (conflict) {
