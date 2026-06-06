@@ -115,28 +115,26 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
 
       {/* Gauche — bannière plein format */}
-      <div className="hidden lg:flex flex-col relative flex-1 bg-white">
+      <div className="hidden lg:flex flex-col relative lg:w-[20%] overflow-hidden">
+        {/* Fond flou pour remplir sans espace blanc */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/banner-expo.png"
+          src="/banner-expo-portrait.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm"
+        />
+        {/* Image principale — intégralité visible */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/banner-expo-portrait.png"
           alt="AFCAC Expo"
           className="absolute inset-0 w-full h-full object-contain"
         />
-        <div className="absolute bottom-10 left-10 right-10">
-          <p className="text-muted-foreground text-xs font-semibold tracking-widest uppercase mb-2">
-            15 – 19 juin 2026 · Dakar
-          </p>
-          <h2 className="text-foreground text-3xl font-bold leading-snug">
-            AFCAC Expo 2026
-          </h2>
-          <p className="text-muted-foreground text-sm mt-2">
-            Plateforme de gestion des réservations bilatérales
-          </p>
-        </div>
       </div>
 
       {/* Droite — formulaire */}
-      <div className="flex flex-col items-center justify-center w-full lg:w-[460px] shrink-0 bg-background px-10 py-12">
+      <div className="flex flex-col items-center justify-center w-full lg:w-[80%] bg-background px-10 py-12">
         {/* Logo centré */}
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-border shadow-md p-2 mb-4">
