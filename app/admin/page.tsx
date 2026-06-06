@@ -137,9 +137,9 @@ export default function AdminPage() {
     cancelled:  reservations.filter(r => r.status === "cancelled").length,
   };
 
-  const reservedRooms = [...new Set(
+  const reservedRooms = Array.from(new Set(
     reservations.filter(r => r.type === "salle" && r.location).map(r => r.location)
-  )].sort();
+  )).sort();
 
   function applyFilter(list: Reservation[]) {
     if (reservedRooms.includes(filter)) return list.filter(r => r.type === "salle" && r.location === filter);
