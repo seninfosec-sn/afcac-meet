@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { Users, DoorOpen, CheckCircle2, Clock, XCircle, CalendarDays, RefreshCw, ShieldCheck, TrendingUp, CalendarClock, Download, Pencil, Trash2, X, Save } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Users, DoorOpen, CheckCircle2, Clock, XCircle, CalendarDays, RefreshCw, ShieldCheck, TrendingUp, CalendarClock, Download, Pencil, Trash2, X, Save, FileSpreadsheet, FileText, ChevronDown, Loader2 } from "lucide-react";
 import { Reservation } from "@/lib/data";
 import StatusBadge from "@/components/StatusBadge";
 import { cn } from "@/lib/utils";
-import * as XLSX from "xlsx";
+import { downloadPDFReport } from "@/lib/export-pdf";
 
 interface AdminUser { id: string; email: string; display_name: string; created_at: string; }
 interface AdminData { reservations: Reservation[]; users: AdminUser[]; }
@@ -21,6 +21,9 @@ export default function AdminPage() {
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editName, setEditName] = useState("");
   const [userAction, setUserAction] = useState<string | null>(null);
+  const [showDownload, setShowDownload] = useState(false);
+  const [downloading, setDownloading] = useState<"excel" | "pdf" | null>(null);
+  const downloadRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -36,6 +39,17 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    if (!showDownload) return;
+    function handleClick(e: MouseEvent) {
+      if (downloadRef.current && !downloadRef.current.contains(e.target as Node)) {
+        setShowDownload(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showDownload]);
 
   async function handleDeleteUser(id: string, label: string) {
     if (!window.confirm(`Supprimer l'utilisateur "${label}" ? Cette action est irréversible.`)) return;
@@ -69,69 +83,34 @@ export default function AdminPage() {
     setUpdating(null);
   }
 
-  function downloadReport() {
+  async function handleDownloadExcel() {
     if (!data) return;
-    const { reservations, users } = data;
-    const now = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+    setDownloading("excel");
+    setShowDownload(false);
+    try {
+      const res = await fetch("/api/admin/export");
+      if (!res.ok) throw new Error("Erreur serveur");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rapport-afcac-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(null);
+    }
+  }
 
-    // ── Feuille 1 : Invitations bilatérales ──────────────────────────
-    const invitations = reservations
-      .filter(r => r.type === "bilateral")
-      .map(r => ({
-        "Titre":          r.title,
-        "Date":           r.date,
-        "Heure début":    r.startTime,
-        "Heure fin":      r.endTime,
-        "Lieu":           r.location,
-        "Initiateur":     r.creatorEmail ?? "—",
-        "Invité(e)":      r.inviteeEmail ?? "—",
-        "Statut":         r.status === "confirmed" ? "Confirmé"
-                        : r.status === "pending"   ? "En attente"
-                        : r.status === "proposed"  ? "Proposé"
-                        : "Annulé",
-      }));
-
-    // ── Feuille 2 : Salles occupées ──────────────────────────────────
-    const salles = reservations
-      .filter(r => r.type === "salle")
-      .map(r => ({
-        "Salle":          r.location,
-        "Titre":          r.title,
-        "Date":           r.date,
-        "Heure début":    r.startTime,
-        "Heure fin":      r.endTime,
-        "Organisateur":   r.creatorEmail ?? "—",
-        "Capacité":       r.capacity ?? "—",
-        "Statut":         r.status === "confirmed" ? "Confirmé"
-                        : r.status === "pending"   ? "En attente"
-                        : "Annulé",
-      }));
-
-    // ── Feuille 3 : Utilisateurs ─────────────────────────────────────
-    const utilisateurs = users.map(u => ({
-      "Nom":                u.display_name || "—",
-      "Email":              u.email,
-      "Réservations":       reservations.filter(r => r.creatorEmail === u.email || r.inviteeEmail === u.email).length,
-      "Date d'inscription": new Date(u.created_at).toLocaleDateString("fr-FR"),
-    }));
-
-    // ── Construction du classeur ─────────────────────────────────────
-    const wb = XLSX.utils.book_new();
-
-    const wsInv = XLSX.utils.json_to_sheet(invitations.length ? invitations : [{ "Info": "Aucune invitation" }]);
-    const wsSal = XLSX.utils.json_to_sheet(salles.length     ? salles     : [{ "Info": "Aucune réservation de salle" }]);
-    const wsUsr = XLSX.utils.json_to_sheet(utilisateurs.length ? utilisateurs : [{ "Info": "Aucun utilisateur" }]);
-
-    // Largeurs de colonnes automatiques
-    [wsInv, wsSal, wsUsr].forEach(ws => {
-      ws["!cols"] = Array(10).fill({ wch: 22 });
-    });
-
-    XLSX.utils.book_append_sheet(wb, wsInv, "Invitations");
-    XLSX.utils.book_append_sheet(wb, wsSal, "Salles occupées");
-    XLSX.utils.book_append_sheet(wb, wsUsr, "Utilisateurs");
-
-    XLSX.writeFile(wb, `rapport-afcac-${now.replace(/ /g, "-")}.xlsx`);
+  async function handleDownloadPDF() {
+    if (!data) return;
+    setDownloading("pdf");
+    setShowDownload(false);
+    try {
+      await downloadPDFReport(data);
+    } finally {
+      setDownloading(null);
+    }
   }
 
   if (loading) return (
@@ -187,13 +166,55 @@ export default function AdminPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={downloadReport}
-            disabled={!data}
-            className="flex items-center gap-2 text-sm text-white bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-          >
-            <Download className="w-4 h-4" /> Télécharger le rapport
-          </button>
+          {/* Download dropdown */}
+          <div ref={downloadRef} className="relative">
+            <button
+              onClick={() => setShowDownload(v => !v)}
+              disabled={!data || !!downloading}
+              className="flex items-center gap-2 text-sm text-white bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            >
+              {downloading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4" />
+              )}
+              {downloading === "excel" ? "Génération Excel…" : downloading === "pdf" ? "Génération PDF…" : "Télécharger le rapport"}
+              {!downloading && <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", showDownload && "rotate-180")} />}
+            </button>
+
+            {showDownload && (
+              <div className="absolute right-0 top-full mt-1.5 w-52 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-slide-up">
+                <div className="px-3 py-2 border-b border-border">
+                  <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">Format d'export</p>
+                </div>
+                <button
+                  onClick={handleDownloadExcel}
+                  className="w-full flex items-center gap-3 px-3 py-3 text-sm hover:bg-muted/60 transition-colors text-left"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-[#e8f2ef] flex items-center justify-center shrink-0">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-brand" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Rapport Excel</p>
+                    <p className="text-[11px] text-muted-foreground">4 feuilles analytiques .xlsx</p>
+                  </div>
+                </button>
+                <button
+                  onClick={handleDownloadPDF}
+                  className="w-full flex items-center gap-3 px-3 py-3 text-sm hover:bg-muted/60 transition-colors text-left border-t border-border/60"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                    <FileText className="w-3.5 h-3.5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Rapport PDF</p>
+                    <p className="text-[11px] text-muted-foreground">5 pages — mise en page pro</p>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+
           <button onClick={fetchData} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border px-4 py-2 rounded-lg transition-colors">
             <RefreshCw className="w-4 h-4" /> Actualiser
           </button>
