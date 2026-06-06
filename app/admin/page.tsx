@@ -42,12 +42,12 @@ export default function AdminPage() {
   const [roomForm, setRoomForm]   = useState({ name: "", floor: "", capacity: "0", equipment: "" });
   const [roomAction, setRoomAction] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     const res = await fetch("/api/admin/reservations");
     if (!res.ok) {
       const d = await res.json();
-      setError(d.error ?? "Erreur");
+      if (!silent) setError(d.error ?? "Erreur");
       setLoading(false);
       return;
     }
@@ -61,6 +61,14 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => { fetchData(); fetchRooms(); }, [fetchData, fetchRooms]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData(true);
+      fetchRooms();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [fetchData, fetchRooms]);
 
   useEffect(() => {
     if (!showDownload) return;
@@ -293,9 +301,10 @@ export default function AdminPage() {
             )}
           </div>
 
-          <button onClick={() => { fetchData(); fetchRooms(); }} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground border border-border px-4 py-2 rounded-lg transition-colors">
-            <RefreshCw className="w-4 h-4" /> Actualiser
-          </button>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground px-3 py-2 border border-border rounded-lg bg-card">
+            <span className="w-2 h-2 rounded-full bg-brand animate-pulse shrink-0" />
+            Temps réel
+          </div>
         </div>
       </div>
 
