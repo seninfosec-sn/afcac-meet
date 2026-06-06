@@ -41,7 +41,7 @@ export default function ProfilPage() {
         <p className="text-sm text-muted-foreground mt-0.5">Gérez votre compte et vos préférences</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-[10px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[10px]">
         {/* Left column */}
         <div className="flex flex-col gap-[10px]">
           {/* Profile card */}
@@ -83,7 +83,7 @@ export default function ProfilPage() {
         </div>
 
         {/* Right columns */}
-        <div className="col-span-2 flex flex-col gap-[10px]">
+        <div className="md:col-span-2 flex flex-col gap-[10px]">
           {/* Preferences */}
           <div className="bg-card rounded-2xl border border-border overflow-hidden opacity-60 pointer-events-none select-none">
             <div className="px-6 py-4 border-b border-border flex items-center justify-between">
@@ -120,7 +120,8 @@ export default function ProfilPage() {
               <h3 className="font-semibold text-foreground">Activité récente</h3>
               <p className="text-xs text-muted-foreground mt-0.5">Vos dernières réservations</p>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[500px]">
               <tbody>
                 {reservations.slice(0, 5).map((r, i, arr) => (
                   <tr key={r.id} className={cn("", i < arr.length - 1 && "border-b border-border")}>
@@ -135,6 +136,7 @@ export default function ProfilPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

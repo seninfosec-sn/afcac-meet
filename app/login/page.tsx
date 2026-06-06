@@ -115,7 +115,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
 
       {/* Gauche — bannière plein format */}
-      <div className="hidden lg:flex flex-col relative lg:w-[20%] overflow-hidden">
+      <div className="hidden lg:flex flex-col relative lg:w-[30%] overflow-hidden">
         {/* Fond flou pour remplir sans espace blanc */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -134,7 +134,7 @@ export default function LoginPage() {
       </div>
 
       {/* Droite — formulaire */}
-      <div className="flex flex-col items-center justify-center w-full lg:w-[80%] bg-background px-10 py-12">
+      <div className="flex flex-col items-center justify-center w-full lg:w-[70%] bg-background px-4 py-8 sm:px-10 sm:py-12">
         {/* Logo centré */}
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center justify-center w-20 h-20 rounded-2xl bg-white border border-border shadow-md p-2 mb-4">
@@ -145,7 +145,7 @@ export default function LoginPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Afcac-expo-meet</h1>
+          <h1 className="text-2xl font-bold text-foreground">OFFICIAL BILATERAL MEETINGS PLATFORM</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestion de réservations</p>
         </div>
 

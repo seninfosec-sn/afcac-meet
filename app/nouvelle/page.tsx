@@ -205,7 +205,7 @@ export default function NouvellePage() {
         <p className="text-sm text-muted-foreground mt-0.5">Choisissez le type de réservation à créer</p>
       </div>
 
-      <div className="grid grid-cols-3 gap-[10px]">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-[10px]">
         {/* Left column */}
         <div className="flex flex-col gap-[10px]">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Type de réservation</h2>
@@ -246,7 +246,7 @@ export default function NouvellePage() {
         </div>
 
         {/* Right column — form */}
-        <div className="col-span-2 bg-card rounded-2xl border border-border p-8">
+        <div className="md:col-span-2 bg-card rounded-2xl border border-border p-4 md:p-8">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-6">
             {type === "bilateral" ? "Détails de la rencontre" : "Détails de la réservation"}
           </h2>
@@ -260,7 +260,7 @@ export default function NouvellePage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
 
             {/* ── Créneau (commun aux deux types) ── */}
-            <div className="grid grid-cols-2 gap-[10px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Date</label>
                 <input type="date" required value={date} onChange={e => setDate(e.target.value)}
@@ -289,7 +289,7 @@ export default function NouvellePage() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 gap-[10px]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
                 {/* Option Visio uniquement pour bilatéral */}
                 {type === "bilateral" && (
                   <button

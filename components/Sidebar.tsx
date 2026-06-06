@@ -46,7 +46,12 @@ function timeAgo(dateStr: string) {
   return `il y a ${Math.floor(diff / 86400)} j`;
 }
 
-export default function Sidebar() {
+interface SidebarProps {
+  open?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ open = false, onClose }: SidebarProps) {
   const path = usePathname();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -97,11 +102,24 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed top-0 left-0 flex flex-col w-64 h-screen border-r border-border bg-card shrink-0 z-40">
+    <aside className={cn(
+      "fixed top-0 left-0 flex flex-col w-64 h-screen border-r border-border bg-card shrink-0 z-40",
+      "transition-transform duration-300 ease-in-out",
+      open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+    )}>
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-border">
-        <span className="text-xl font-bold text-brand tracking-tight">Afcac-expo-meet</span>
-        <p className="text-xs text-muted-foreground mt-0.5">Gestion de réservations</p>
+      <div className="px-6 py-6 border-b border-border flex items-center justify-between">
+        <div>
+          <span className="text-xl font-bold text-brand tracking-tight">Afcac-expo-meet</span>
+          <p className="text-xs text-muted-foreground mt-0.5">Gestion de réservations</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+          aria-label="Fermer le menu"
+        >
+          <X className="w-4 h-4" />
+        </button>
       </div>
 
       {/* Nav */}
@@ -110,6 +128,7 @@ export default function Sidebar() {
           const active = path === href;
           return (
             <Link key={href} href={href}
+              onClick={onClose}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 active ? "bg-brand text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"

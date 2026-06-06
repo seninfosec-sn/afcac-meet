@@ -112,8 +112,8 @@ export default function ReservationsPage() {
 
   function renderTable(list: Reservation[], dimmed = false) {
     return (
-      <div className={cn("bg-card rounded-2xl border border-border overflow-hidden", dimmed && "opacity-70")}>
-        <table className="w-full text-sm">
+      <div className={cn("bg-card rounded-2xl border border-border overflow-x-auto", dimmed && "opacity-70")}>
+        <table className="w-full text-sm min-w-[600px]">
           <thead>
             <tr className="border-b border-border bg-muted/40">
               {["Type", "Titre", "Date", "Horaire", "Lieu", "Statut", ""].map(h => (
@@ -155,12 +155,12 @@ export default function ReservationsPage() {
   return (
     <div className="flex flex-col gap-[10px]">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start gap-3 justify-between">
         <div>
           <h1 className="text-2xl font-bold">Mes réservations</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gérez vos rendez-vous et réservations de salles</p>
         </div>
-        <Link href="/nouvelle" className="flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors">
+        <Link href="/nouvelle" className="flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shrink-0">
           <Plus className="w-4 h-4" /> Nouvelle réservation
         </Link>
       </div>
@@ -174,20 +174,22 @@ export default function ReservationsPage() {
           </h2>
           <div className="flex flex-col gap-2">
             {pendingInvitations.map(r => (
-              <div key={r.id} className="bg-card border-2 border-brand/30 rounded-2xl p-5 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center shrink-0">
-                  <Users className="w-5 h-5 text-brand" />
+              <div key={r.id} className="bg-card border-2 border-brand/30 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center shrink-0">
+                    <Users className="w-5 h-5 text-brand" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground">{r.title}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      {r.date} · {r.startTime} – {r.endTime} · {r.location}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      De : {r.creatorEmail}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-foreground">{r.title}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    {r.date} · {r.startTime} – {r.endTime} · {r.location}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    De : {r.creatorEmail}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => handleConfirm(r)}
                     className="flex items-center gap-1.5 text-sm text-white bg-brand hover:bg-brand-dark px-4 py-2 rounded-lg transition-colors font-medium"
@@ -214,7 +216,7 @@ export default function ReservationsPage() {
       )}
 
       {/* Filters */}
-      <div className="flex gap-[10px]">
+      <div className="flex flex-wrap gap-[10px]">
         {FILTERS.map(f => (
           <button key={f} onClick={() => setFilter(f)}
             className={cn("px-4 py-2 rounded-lg text-sm font-medium border transition-colors",

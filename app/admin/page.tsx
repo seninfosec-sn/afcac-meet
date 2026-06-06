@@ -252,7 +252,7 @@ export default function AdminPage() {
   return (
     <div className="flex flex-col gap-[10px]">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start gap-3 justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-brand flex items-center justify-center">
             <ShieldCheck className="w-5 h-5 text-white" />
@@ -309,7 +309,7 @@ export default function AdminPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-4 gap-[10px]">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
         {[
           { label: "Total réservations", value: stats.total,     icon: CalendarDays,  color: "text-foreground",   bg: "bg-muted" },
           { label: "Confirmées",         value: stats.confirmed, icon: CheckCircle2,  color: "text-brand",        bg: "bg-brand-light" },
@@ -333,7 +333,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {(["reservations", "users", "rooms"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={cn("px-5 py-2 rounded-lg text-sm font-medium border transition-colors",
@@ -386,8 +386,8 @@ export default function AdminPage() {
             ))}
           </div>
 
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-card rounded-2xl border border-border overflow-x-auto">
+            <table className="w-full text-sm min-w-[700px]">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
                   {["Type", "Titre", "Initiateur", "Invité / Salle", "Date", "Horaire", "Statut", "Actions"].map(h => (
@@ -444,8 +444,8 @@ export default function AdminPage() {
 
       {/* ── Users tab ── */}
       {tab === "users" && (
-        <div className="bg-card rounded-2xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-card rounded-2xl border border-border overflow-x-auto">
+          <table className="w-full text-sm min-w-[600px]">
             <thead>
               <tr className="border-b border-border bg-muted/40">
                 {["Initiales", "Nom", "Email", "Réservations", "Inscrit le", "Actions"].map(h => (
@@ -516,8 +516,8 @@ export default function AdminPage() {
             </button>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="bg-card rounded-2xl border border-border overflow-x-auto">
+            <table className="w-full text-sm min-w-[550px]">
               <thead>
                 <tr className="border-b border-border bg-muted/40">
                   {["Salle", "Étage", "Capacité", "Équipements", "Statut", "Actions"].map(h => (

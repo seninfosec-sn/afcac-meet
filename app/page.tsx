@@ -82,14 +82,14 @@ export default function CalendarPage() {
 
   return (
     <div className="flex flex-col gap-[10px]">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start gap-3 justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Juin 2026 — Expo AFCAC (15–19 juin)</p>
         </div>
         <Link
           href="/nouvelle"
-          className="flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors"
+          className="flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-dark transition-colors shrink-0"
         >
           <Plus className="w-4 h-4" />
           Nouvelle réservation
@@ -97,7 +97,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-[10px]">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
         {stats.map(({ label, value, icon: Icon, color, bg }) => (
           <div key={label} className="bg-card rounded-xl border border-border p-5 flex items-center gap-4">
             <div className={cn("w-11 h-11 rounded-xl flex items-center justify-center shrink-0", bg)}>
@@ -112,9 +112,9 @@ export default function CalendarPage() {
       </div>
 
       {/* Main two-column layout */}
-      <div className="grid grid-cols-5 gap-[10px]">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-[10px]">
         {/* Calendar */}
-        <div className="col-span-3 bg-card rounded-2xl border border-border p-6">
+        <div className="md:col-span-3 bg-card rounded-2xl border border-border p-6">
           <div className="flex items-center justify-between mb-5">
             <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
               <ChevronLeft className="w-4 h-4" />
@@ -161,7 +161,7 @@ export default function CalendarPage() {
         </div>
 
         {/* Right column */}
-        <div className="col-span-2 flex flex-col gap-[10px]">
+        <div className="md:col-span-2 flex flex-col gap-[10px]">
           <div className="bg-card rounded-2xl border border-border p-5 flex-1">
             <h2 className="text-sm font-semibold text-foreground mb-1">
               {`${selectedDay} juin 2026`}
