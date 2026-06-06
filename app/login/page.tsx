@@ -115,14 +115,14 @@ export default function LoginPage() {
     <div className="min-h-screen flex">
 
       {/* Gauche — bannière plein format */}
-      <div className="hidden lg:block relative flex-1">
+      <div className="hidden lg:flex flex-col relative flex-1 bg-black">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/banner-expo.png"
           alt="AFCAC Expo"
-          className="absolute inset-0 w-full h-full object-cover object-center"
+          className="absolute inset-0 w-full h-full object-contain"
         />
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-black/20" />
         <div className="absolute bottom-10 left-10 right-10">
           <p className="text-white/75 text-xs font-semibold tracking-widest uppercase mb-2">
             15 – 19 juin 2026 · Dakar
