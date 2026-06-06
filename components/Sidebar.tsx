@@ -68,7 +68,7 @@ export default function Sidebar() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30_000);
+    const interval = setInterval(fetchNotifications, 2_000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 

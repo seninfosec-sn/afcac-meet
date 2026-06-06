@@ -22,8 +22,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchReservations = useCallback(async () => {
-    setLoading(true);
+  const fetchReservations = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/reservations");
       if (res.ok) {
@@ -33,18 +33,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
           setReservations(data);
         }
       } else {
-        // Non authentifié ou session invalide — vide le store
-        setReservations([]);
+        if (!silent) setReservations([]);
       }
     } catch {
-      setReservations([]);
+      if (!silent) setReservations([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     fetchReservations();
+  }, [fetchReservations]);
+
+  useEffect(() => {
+    const interval = setInterval(() => fetchReservations(true), 2000);
+    return () => clearInterval(interval);
   }, [fetchReservations]);
 
   // Optimistic add: prepend locally, then refresh from server
