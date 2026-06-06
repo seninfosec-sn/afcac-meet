@@ -1,11 +1,20 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Users, DoorOpen, Check, Loader2, Wifi, Lock } from "lucide-react";
-import { ROOMS, Reservation } from "@/lib/data";
+import { Reservation } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+
+interface RoomData {
+  id: string;
+  name: string;
+  capacity: number;
+  floor: string;
+  equipment: string[];
+  locked: boolean;
+}
 
 type ReservationType = "bilateral" | "salle";
 
@@ -16,9 +25,6 @@ const SLOTS = Array.from({ length: 13 }, (_, i) => {
   const m = totalMin % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 });
-
-// Virtual room option for bilateral
-const VIRTUAL_ROOM = { id: "visio", name: "Visio", capacity: 0, equipment: [], floor: "" };
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
@@ -53,8 +59,9 @@ function isRoomConflict(
 
 export default function NouvellePage() {
   const router = useRouter();
-  const { reservations, addReservation, refresh } = useStore();
+  const { reservations, refresh } = useStore();
 
+  const [rooms, setRooms] = useState<RoomData[]>([]);
   const [type, setType] = useState<ReservationType>("bilateral");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -74,24 +81,31 @@ export default function NouvellePage() {
 
   const endTime = addMinutes(time, SLOT_DURATION);
 
+  useEffect(() => {
+    fetch("/api/rooms")
+      .then(r => r.json())
+      .then(data => setRooms(data.rooms ?? []))
+      .catch(() => {});
+  }, []);
+
   // Compute which rooms have a slot conflict for current date/time
   const bookedRooms = useMemo(() =>
-    ROOMS.reduce<Record<string, boolean>>((acc, room) => {
+    rooms.reduce<Record<string, boolean>>((acc, room) => {
       acc[room.id] = isRoomConflict(room.id, date, time, endTime, reservations);
       return acc;
     }, {}),
-    [date, time, endTime, reservations]
+    [rooms, date, time, endTime, reservations]
   );
 
   // Count reservations per room for the selected day (max 13)
   const roomDayCount = useMemo(() =>
-    ROOMS.reduce<Record<string, number>>((acc, room) => {
+    rooms.reduce<Record<string, number>>((acc, room) => {
       acc[room.id] = reservations.filter(
         r => r.status !== "cancelled" && r.date === date && r.room === room.id
       ).length;
       return acc;
     }, {}),
-    [date, reservations]
+    [rooms, date, reservations]
   );
 
   async function handleSubmit(e: React.FormEvent) {
@@ -107,8 +121,8 @@ export default function NouvellePage() {
 
     setLoading(true);
 
-    const roomName = selectedRoom === "visio" ? "Visio" : ROOMS.find(r => r.id === selectedRoom)?.name ?? "";
-    const room = ROOMS.find(r => r.id === selectedRoom);
+    const roomName = selectedRoom === "visio" ? "Visio" : rooms.find(r => r.id === selectedRoom)?.name ?? "";
+    const room = rooms.find(r => r.id === selectedRoom);
 
     // Save to DB via API
     const res = await fetch("/api/reservations", {
@@ -299,10 +313,10 @@ export default function NouvellePage() {
                 )}
 
                 {/* Salles physiques */}
-                {ROOMS.map(room => {
+                {rooms.map(room => {
                   const slotBooked = bookedRooms[room.id];
                   const dayFull = (roomDayCount[room.id] ?? 0) >= 13;
-                  const unavailable = slotBooked || dayFull;
+                  const unavailable = slotBooked || dayFull || room.locked;
                   const active = selectedRoom === room.id;
                   return (
                     <button
@@ -323,12 +337,17 @@ export default function NouvellePage() {
                         <p className={cn("text-sm font-semibold", unavailable ? "text-muted-foreground" : active ? "text-olive-dark" : "text-foreground")}>
                           {room.name}
                         </p>
-                        {dayFull && (
+                        {room.locked && (
+                          <span className="flex items-center gap-1 text-[10px] text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded-full">
+                            <Lock className="w-2.5 h-2.5" /> Verrouillée
+                          </span>
+                        )}
+                        {!room.locked && dayFull && (
                           <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
                             <Lock className="w-2.5 h-2.5" /> Complet
                           </span>
                         )}
-                        {!dayFull && slotBooked && (
+                        {!room.locked && !dayFull && slotBooked && (
                           <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
                             <Lock className="w-2.5 h-2.5" /> Créneau pris
                           </span>
@@ -336,7 +355,7 @@ export default function NouvellePage() {
                       </div>
                       <p className="text-xs text-muted-foreground">{room.capacity} pers. · {room.floor}</p>
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {room.equipment.slice(0, 2).map(eq => (
+                        {room.equipment.slice(0, 2).map((eq: string) => (
                           <span key={eq} className="text-[10px] bg-muted px-1.5 py-0.5 rounded">{eq}</span>
                         ))}
                       </div>
