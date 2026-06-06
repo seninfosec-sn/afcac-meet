@@ -197,6 +197,19 @@ export async function getAllUsers(): Promise<{ id: string; email: string; displa
   return rows as { id: string; email: string; display_name: string; created_at: string }[];
 }
 
+export async function updateUserName(id: string, displayName: string): Promise<boolean> {
+  const r = await sql`
+    UPDATE users SET display_name = ${displayName}, updated_at = NOW()
+    WHERE id = ${id} RETURNING id
+  `;
+  return r.length > 0;
+}
+
+export async function deleteUser(id: string): Promise<boolean> {
+  const r = await sql`DELETE FROM users WHERE id = ${id} RETURNING id`;
+  return r.length > 0;
+}
+
 // Conflict check for room bookings
 export async function hasRoomConflict(
   roomId: string, slotStart: string, slotEnd: string
