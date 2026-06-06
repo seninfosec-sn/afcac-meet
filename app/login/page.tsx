@@ -1,12 +1,11 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Loader2, Mail, ArrowRight, RotateCcw, CheckCircle2 } from "lucide-react";
 
 type Step = "email" | "otp";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -17,7 +16,6 @@ export default function LoginPage() {
 
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Countdown timer for resend
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
@@ -28,21 +26,13 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     const res = await fetch("/api/auth/send-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
-
     setLoading(false);
-
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error);
-      return;
-    }
-
+    if (!res.ok) { const data = await res.json(); setError(data.error); return; }
     const data = await res.json();
     if (data.dev_otp) setDevOtp(data.dev_otp);
     setStep("otp");
@@ -54,20 +44,14 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     const code = otp.join("");
-    if (code.length < 6) {
-      setError("Veuillez entrer le code à 6 chiffres.");
-      return;
-    }
+    if (code.length < 6) { setError("Veuillez entrer le code à 6 chiffres."); return; }
     setLoading(true);
-
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, otp: code }),
     });
-
     setLoading(false);
-
     if (!res.ok) {
       const data = await res.json();
       setError(data.error);
@@ -75,7 +59,6 @@ export default function LoginPage() {
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
       return;
     }
-
     window.location.replace("/");
   }
 
@@ -84,20 +67,12 @@ export default function LoginPage() {
     const next = [...otp];
     next[index] = value.slice(-1);
     setOtp(next);
-    if (value && index < 5) {
-      otpRefs.current[index + 1]?.focus();
-    }
-    // Auto-submit when all filled
-    if (value && index === 5 && next.every(d => d)) {
-      const code = next.join("");
-      submitOtpCode(code);
-    }
+    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+    if (value && index === 5 && next.every(d => d)) submitOtpCode(next.join(""));
   }
 
   function handleOtpKeyDown(index: number, e: React.KeyboardEvent) {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      otpRefs.current[index - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !otp[index] && index > 0) otpRefs.current[index - 1]?.focus();
   }
 
   async function submitOtpCode(code: string) {
@@ -130,11 +105,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email }),
     });
     setLoading(false);
-    if (!res.ok) {
-      const data = await res.json();
-      setError(data.error);
-      return;
-    }
+    if (!res.ok) { const data = await res.json(); setError(data.error); return; }
     const data = await res.json();
     if (data.dev_otp) setDevOtp(data.dev_otp);
     setResendCooldown(60);
@@ -142,20 +113,49 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex">
+      {/* Left — banner */}
+      <div className="hidden lg:block relative flex-1">
+        <Image
+          src="/banner-expo.png"
+          alt="AFCAC Expo"
+          fill
+          className="object-cover"
+          priority
+        />
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute bottom-10 left-10 right-10">
+          <p className="text-white/80 text-sm font-medium tracking-wide uppercase">
+            15 – 19 juin 2026 · Dakar
+          </p>
+          <h2 className="text-white text-3xl font-bold mt-1 leading-tight">
+            AFCAC Expo 2026
+          </h2>
+          <p className="text-white/70 text-sm mt-2">
+            Plateforme de gestion des réservations bilatérales
+          </p>
+        </div>
+      </div>
+
+      {/* Right — form */}
+      <div className="flex flex-col items-center justify-center w-full lg:w-[480px] shrink-0 bg-background px-8 py-12">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img
-            src="/afcac_logo.png"
-            alt="AFCAC"
-            className="h-20 mx-auto mb-4 object-contain"
-          />
+          <div className="flex items-center justify-center mb-4">
+            <Image
+              src="/afcac_logo.png"
+              alt="AFCAC"
+              width={80}
+              height={80}
+              className="object-contain"
+              priority
+            />
+          </div>
           <h1 className="text-2xl font-bold text-foreground">Afcac-expo-meet</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestion de réservations</p>
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-8 shadow-sm">
+        <div className="w-full max-w-sm bg-card rounded-2xl border border-border p-8 shadow-sm">
           {step === "email" ? (
             <>
               <div className="mb-6">
@@ -187,7 +187,6 @@ export default function LoginPage() {
                     />
                   </div>
                 </div>
-
                 <button
                   type="submit"
                   disabled={loading}
@@ -216,7 +215,8 @@ export default function LoginPage() {
 
               {devOtp && (
                 <div className="mb-4 px-4 py-3 rounded-lg bg-amber-50 border border-amber-300 text-sm text-amber-800">
-                  <span className="font-semibold">Mode développement</span> — Code : <span className="font-mono font-bold tracking-widest text-base">{devOtp}</span>
+                  <span className="font-semibold">Mode développement</span> — Code :{" "}
+                  <span className="font-mono font-bold tracking-widest text-base">{devOtp}</span>
                 </div>
               )}
 
@@ -227,7 +227,6 @@ export default function LoginPage() {
               )}
 
               <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
-                {/* OTP inputs */}
                 <div className="flex gap-2 justify-between">
                   {otp.map((digit, i) => (
                     <input
@@ -243,7 +242,6 @@ export default function LoginPage() {
                     />
                   ))}
                 </div>
-
                 <button
                   type="submit"
                   disabled={loading || otp.some(d => !d)}
