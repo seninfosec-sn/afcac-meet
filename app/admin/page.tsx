@@ -9,7 +9,6 @@ import { downloadPDFReport } from "@/lib/export-pdf";
 interface AdminUser { id: string; email: string; display_name: string; created_at: string; }
 interface AdminData { reservations: Reservation[]; users: AdminUser[]; }
 
-const FILTERS = ["Toutes", "Bilatérales", "Salles", "Confirmées", "En attente", "Proposées", "Annulées"];
 
 export default function AdminPage() {
   const [data, setData] = useState<AdminData | null>(null);
@@ -138,10 +137,14 @@ export default function AdminPage() {
     cancelled:  reservations.filter(r => r.status === "cancelled").length,
   };
 
+  const reservedRooms = [...new Set(
+    reservations.filter(r => r.type === "salle" && r.location).map(r => r.location)
+  )].sort();
+
   function applyFilter(list: Reservation[]) {
+    if (reservedRooms.includes(filter)) return list.filter(r => r.type === "salle" && r.location === filter);
     switch (filter) {
       case "Bilatérales": return list.filter(r => r.type === "bilateral");
-      case "Salles":      return list.filter(r => r.type === "salle");
       case "Confirmées":  return list.filter(r => r.status === "confirmed");
       case "En attente":  return list.filter(r => r.status === "pending");
       case "Proposées":   return list.filter(r => r.status === "proposed");
@@ -260,8 +263,34 @@ export default function AdminPage() {
       {tab === "reservations" && (
         <>
           {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            {FILTERS.map(f => (
+          <div className="flex flex-wrap items-center gap-2">
+            {["Toutes", "Bilatérales"].map((f: string) => (
+              <button key={f} onClick={() => setFilter(f)}
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                  filter === f ? "bg-brand text-white border-brand" : "bg-card border-border text-muted-foreground hover:border-brand/40"
+                )}>
+                {f}
+              </button>
+            ))}
+
+            {reservedRooms.length > 0 && (
+              <>
+                <span className="text-border text-base select-none">|</span>
+                {reservedRooms.map((f: string) => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                      filter === f
+                        ? "bg-olive-dark text-white border-olive-dark"
+                        : "bg-card border-border text-muted-foreground hover:border-olive/60"
+                    )}>
+                    <DoorOpen className="w-3 h-3" />{f}
+                  </button>
+                ))}
+                <span className="text-border text-base select-none">|</span>
+              </>
+            )}
+
+            {["Confirmées", "En attente", "Proposées", "Annulées"].map((f: string) => (
               <button key={f} onClick={() => setFilter(f)}
                 className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
                   filter === f ? "bg-brand text-white border-brand" : "bg-card border-border text-muted-foreground hover:border-brand/40"
