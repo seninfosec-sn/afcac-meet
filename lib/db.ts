@@ -1,5 +1,5 @@
 import { neon } from "@neondatabase/serverless";
-import { Reservation } from "./data";
+import { Reservation, ROOMS } from "./data";
 
 const DB_URL = process.env.DATABASE_URL!;
 export const sql = neon(DB_URL);
@@ -289,6 +289,113 @@ export async function getUnreadCount(email: string): Promise<number> {
 export async function getMeetingById(id: string) {
   const rows = await sql`SELECT * FROM meeting_invites WHERE id = ${id} LIMIT 1`;
   return rows[0] as Record<string, unknown> | undefined;
+}
+
+// ── Rooms ────────────────────────────────────────────────────────
+
+export interface DbRoom {
+  id: string;
+  name: string;
+  capacity: number;
+  floor: string;
+  equipment: string[];
+  locked: boolean;
+  created_at: string;
+}
+
+async function ensureRoomsTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS rooms (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      capacity   INTEGER NOT NULL DEFAULT 0,
+      floor      TEXT NOT NULL DEFAULT '',
+      equipment  JSONB NOT NULL DEFAULT '[]',
+      locked     BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+  const cnt = await sql`SELECT COUNT(*)::int AS cnt FROM rooms`;
+  if (Number((cnt[0] as { cnt: number }).cnt) === 0) {
+    for (const room of ROOMS) {
+      await sql`
+        INSERT INTO rooms (id, name, capacity, floor, equipment)
+        VALUES (${room.id}, ${room.name}, ${room.capacity}, ${room.floor}, ${JSON.stringify(room.equipment)}::jsonb)
+        ON CONFLICT (id) DO NOTHING
+      `;
+    }
+  }
+}
+
+function rowToRoom(r: Record<string, unknown>): DbRoom {
+  return {
+    id:         r.id as string,
+    name:       r.name as string,
+    capacity:   Number(r.capacity),
+    floor:      r.floor as string,
+    equipment:  Array.isArray(r.equipment) ? (r.equipment as string[]) : [],
+    locked:     Boolean(r.locked),
+    created_at: r.created_at as string,
+  };
+}
+
+export async function getAllRooms(): Promise<DbRoom[]> {
+  await ensureRoomsTable();
+  const rows = await sql`SELECT * FROM rooms ORDER BY name ASC`;
+  return (rows as Record<string, unknown>[]).map(rowToRoom);
+}
+
+export async function createRoom(data: {
+  name: string; capacity: number; floor: string; equipment: string[];
+}): Promise<DbRoom> {
+  await ensureRoomsTable();
+  const slug = data.name.toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+  const id = `${slug}-${Date.now().toString(36)}`;
+  await sql`
+    INSERT INTO rooms (id, name, capacity, floor, equipment)
+    VALUES (${id}, ${data.name}, ${data.capacity}, ${data.floor}, ${JSON.stringify(data.equipment)}::jsonb)
+  `;
+  const rows = await sql`SELECT * FROM rooms WHERE id = ${id}`;
+  return rowToRoom(rows[0] as Record<string, unknown>);
+}
+
+export async function updateRoom(id: string, data: {
+  name: string; capacity: number; floor: string; equipment: string[];
+}): Promise<boolean> {
+  await ensureRoomsTable();
+  const r = await sql`
+    UPDATE rooms
+    SET name = ${data.name}, capacity = ${data.capacity},
+        floor = ${data.floor}, equipment = ${JSON.stringify(data.equipment)}::jsonb,
+        updated_at = NOW()
+    WHERE id = ${id} RETURNING id
+  `;
+  return r.length > 0;
+}
+
+export async function setRoomLocked(id: string, locked: boolean): Promise<boolean> {
+  await ensureRoomsTable();
+  const r = await sql`
+    UPDATE rooms SET locked = ${locked}, updated_at = NOW()
+    WHERE id = ${id} RETURNING id
+  `;
+  return r.length > 0;
+}
+
+export async function deleteRoom(id: string): Promise<boolean> {
+  await ensureRoomsTable();
+  const r = await sql`DELETE FROM rooms WHERE id = ${id} RETURNING id`;
+  return r.length > 0;
+}
+
+export async function isRoomLocked(id: string): Promise<boolean> {
+  await ensureRoomsTable();
+  const rows = await sql`SELECT locked FROM rooms WHERE id = ${id} LIMIT 1`;
+  if (rows.length === 0) return false;
+  return Boolean((rows[0] as { locked: boolean }).locked);
 }
 
 // Conflict check for room bookings
