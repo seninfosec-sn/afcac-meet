@@ -8,14 +8,13 @@ import { cn } from "@/lib/utils";
 
 type ReservationType = "bilateral" | "salle";
 
-const DURATIONS = [
-  { label: "30 minutes", minutes: 30 },
-  { label: "1 heure",    minutes: 60 },
-  { label: "1h30",       minutes: 90 },
-  { label: "2 heures",   minutes: 120 },
-  { label: "Demi-journée", minutes: 240 },
-  { label: "Journée complète", minutes: 480 },
-];
+const SLOT_DURATION = 45;
+const SLOTS = Array.from({ length: 13 }, (_, i) => {
+  const totalMin = 8 * 60 + i * SLOT_DURATION;
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+});
 
 // Virtual room option for bilateral
 const VIRTUAL_ROOM = { id: "visio", name: "Visio", capacity: 0, equipment: [], floor: "" };
@@ -61,9 +60,8 @@ export default function NouvellePage() {
   const [error, setError] = useState<string | null>(null);
 
   // Shared fields
-  const [date, setDate] = useState("2026-03-25");
-  const [time, setTime] = useState("10:00");
-  const [duration, setDuration] = useState(60);
+  const [date, setDate] = useState("2026-06-15");
+  const [time, setTime] = useState("08:00");
   const [selectedRoom, setSelectedRoom] = useState("visio"); // "visio" or room id
 
   // Bilateral-only fields
@@ -73,9 +71,9 @@ export default function NouvellePage() {
   // Salle-only fields
   const [subject, setSubject] = useState("");
 
-  const endTime = useMemo(() => addMinutes(time, duration), [time, duration]);
+  const endTime = addMinutes(time, SLOT_DURATION);
 
-  // Compute which rooms are booked for current date/time/duration
+  // Compute which rooms have a slot conflict for current date/time
   const bookedRooms = useMemo(() =>
     ROOMS.reduce<Record<string, boolean>>((acc, room) => {
       acc[room.id] = isRoomConflict(room.id, date, time, endTime, reservations);
@@ -84,12 +82,25 @@ export default function NouvellePage() {
     [date, time, endTime, reservations]
   );
 
+  // Count reservations per room for the selected day (max 13)
+  const roomDayCount = useMemo(() =>
+    ROOMS.reduce<Record<string, number>>((acc, room) => {
+      acc[room.id] = reservations.filter(
+        r => r.status !== "cancelled" && r.date === date && r.room === room.id
+      ).length;
+      return acc;
+    }, {}),
+    [date, reservations]
+  );
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    if (selectedRoom !== "visio" && bookedRooms[selectedRoom]) {
-      setError("Cette salle est déjà réservée sur ce créneau. Veuillez en choisir une autre.");
+    if (selectedRoom !== "visio" && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 13)) {
+      setError((roomDayCount[selectedRoom] ?? 0) >= 13
+        ? "Cette salle a atteint le maximum de 13 réservations pour cette journée."
+        : "Ce créneau est déjà pris pour cette salle. Veuillez en choisir un autre.");
       return;
     }
 
@@ -230,22 +241,20 @@ export default function NouvellePage() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
 
             {/* ── Créneau (commun aux deux types) ── */}
-            <div className="grid grid-cols-3 gap-[10px]">
+            <div className="grid grid-cols-2 gap-[10px]">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium">Date</label>
                 <input type="date" required value={date} onChange={e => setDate(e.target.value)}
+                  min="2026-06-15" max="2026-06-19"
                   className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Heure de début</label>
-                <input type="time" required value={time} onChange={e => setTime(e.target.value)}
-                  className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Durée</label>
-                <select value={duration} onChange={e => setDuration(Number(e.target.value))}
+                <label className="text-sm font-medium">Créneau <span className="text-muted-foreground font-normal">(45 min)</span></label>
+                <select value={time} onChange={e => setTime(e.target.value)}
                   className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors">
-                  {DURATIONS.map(d => <option key={d.label} value={d.minutes}>{d.label}</option>)}
+                  {SLOTS.map(s => (
+                    <option key={s} value={s}>{s} – {addMinutes(s, SLOT_DURATION)}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -286,17 +295,19 @@ export default function NouvellePage() {
 
                 {/* Salles physiques */}
                 {ROOMS.map(room => {
-                  const booked = bookedRooms[room.id];
+                  const slotBooked = bookedRooms[room.id];
+                  const dayFull = (roomDayCount[room.id] ?? 0) >= 13;
+                  const unavailable = slotBooked || dayFull;
                   const active = selectedRoom === room.id;
                   return (
                     <button
                       key={room.id}
                       type="button"
-                      disabled={booked}
-                      onClick={() => !booked && setSelectedRoom(room.id)}
+                      disabled={unavailable}
+                      onClick={() => !unavailable && setSelectedRoom(room.id)}
                       className={cn(
                         "flex flex-col items-start gap-1 p-4 rounded-xl border-2 transition-all text-left",
-                        booked
+                        unavailable
                           ? "border-border bg-muted/40 opacity-50 cursor-not-allowed"
                           : active
                           ? "border-[#b3ae41] bg-olive-light"
@@ -304,12 +315,17 @@ export default function NouvellePage() {
                       )}
                     >
                       <div className="flex items-center justify-between w-full">
-                        <p className={cn("text-sm font-semibold", booked ? "text-muted-foreground" : active ? "text-olive-dark" : "text-foreground")}>
+                        <p className={cn("text-sm font-semibold", unavailable ? "text-muted-foreground" : active ? "text-olive-dark" : "text-foreground")}>
                           {room.name}
                         </p>
-                        {booked && (
+                        {dayFull && (
                           <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
-                            <Lock className="w-2.5 h-2.5" /> Indisponible
+                            <Lock className="w-2.5 h-2.5" /> Complet
+                          </span>
+                        )}
+                        {!dayFull && slotBooked && (
+                          <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
+                            <Lock className="w-2.5 h-2.5" /> Créneau pris
                           </span>
                         )}
                       </div>

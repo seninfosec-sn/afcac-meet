@@ -226,3 +226,22 @@ export async function hasMeetingRoomConflict(
   `;
   return rows.length > 0;
 }
+
+// Count total room usage (room_reservations + meeting_invites) for a given day
+export async function countRoomUsageForDay(roomId: string, date: string): Promise<number> {
+  const dayStart = `${date}T00:00:00Z`;
+  const dayEnd   = `${date}T23:59:59Z`;
+  const [r1, r2] = await Promise.all([
+    sql`SELECT COUNT(*)::int AS cnt FROM room_reservations
+        WHERE room_ref->>'id' = ${roomId}
+          AND status != 'cancelled'
+          AND slot_start_at >= ${dayStart}
+          AND slot_start_at <= ${dayEnd}`,
+    sql`SELECT COUNT(*)::int AS cnt FROM meeting_invites
+        WHERE location->>'roomId' = ${roomId}
+          AND status != 'cancelled'
+          AND slot_start_at >= ${dayStart}
+          AND slot_start_at <= ${dayEnd}`,
+  ]);
+  return Number((r1[0] as { cnt: number }).cnt) + Number((r2[0] as { cnt: number }).cnt);
+}

@@ -3,6 +3,19 @@ import { useState } from "react";
 import { X, CalendarDays, Clock } from "lucide-react";
 import { Reservation } from "@/lib/data";
 
+const SLOT_DURATION = 45;
+const SLOTS = Array.from({ length: 13 }, (_, i) => {
+  const total = 8 * 60 + i * SLOT_DURATION;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+});
+function addMinutes(time: string, mins: number): string {
+  const [h, m] = time.split(":").map(Number);
+  const total = h * 60 + m + mins;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
 interface Props {
   reservation: Reservation;
   onClose: () => void;
@@ -10,18 +23,16 @@ interface Props {
 }
 
 export default function ProposeModal({ reservation, onClose, onPropose }: Props) {
+  const snapStart = SLOTS.includes(reservation.startTime) ? reservation.startTime : SLOTS[0];
   const [date, setDate] = useState(reservation.date);
-  const [startTime, setStartTime] = useState(reservation.startTime);
-  const [endTime, setEndTime] = useState(reservation.endTime);
+  const [startTime, setStartTime] = useState(snapStart);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const endTime = addMinutes(startTime, SLOT_DURATION);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (endTime <= startTime) {
-      setError("L'heure de fin doit être après l'heure de début.");
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -68,6 +79,8 @@ export default function ProposeModal({ reservation, onClose, onPropose }: Props)
               required
               value={date}
               onChange={e => setDate(e.target.value)}
+              min="2026-06-15"
+              max="2026-06-19"
               className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
             />
           </div>
@@ -75,27 +88,25 @@ export default function ProposeModal({ reservation, onClose, onPropose }: Props)
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-brand" /> Début
+                <Clock className="w-3.5 h-3.5 text-brand" /> Créneau <span className="text-muted-foreground font-normal">(45 min)</span>
               </label>
-              <input
-                type="time"
-                required
+              <select
                 value={startTime}
                 onChange={e => setStartTime(e.target.value)}
                 className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
-              />
+              >
+                {SLOTS.map(s => (
+                  <option key={s} value={s}>{s} – {addMinutes(s, SLOT_DURATION)}</option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5 text-muted-foreground" /> Fin
               </label>
-              <input
-                type="time"
-                required
-                value={endTime}
-                onChange={e => setEndTime(e.target.value)}
-                className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
-              />
+              <div className="h-10 px-3 rounded-lg border border-input bg-muted/50 text-sm flex items-center text-muted-foreground">
+                {endTime}
+              </div>
             </div>
           </div>
 

@@ -5,7 +5,25 @@ import {
   insertMeetingInvite,
   insertRoomReservation,
   hasRoomConflict,
+  countRoomUsageForDay,
 } from "@/lib/db";
+
+const EXPO_DATES = new Set(["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"]);
+const MAX_SLOTS_PER_DAY = 13;
+
+function parseMinutes(t: string): number {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function isValidSlot(startTime: string, endTime: string): boolean {
+  const start = parseMinutes(startTime);
+  const end   = parseMinutes(endTime);
+  if (end - start !== 45) return false;
+  if (start < 8 * 60 || start > 17 * 60) return false;
+  if ((start - 8 * 60) % 45 !== 0) return false;
+  return true;
+}
 
 export async function GET() {
   try {
@@ -28,6 +46,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { type, date, startTime, endTime, title, description, inviteeEmail, room, location } = body;
 
+    if (!EXPO_DATES.has(date)) {
+      return NextResponse.json({ error: "Les réservations sont uniquement autorisées du 15 au 19 juin 2026." }, { status: 400 });
+    }
+    if (!isValidSlot(startTime, endTime)) {
+      return NextResponse.json({ error: "Créneau invalide. Les réservations sont de 45 min, de 08h00 à 17h45." }, { status: 400 });
+    }
+
     const slotStart = `${date}T${startTime}:00Z`;
     const slotEnd   = `${date}T${endTime}:00Z`;
     const id        = `r-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -41,6 +66,10 @@ export async function POST(req: NextRequest) {
         const conflict = await hasRoomConflict(room, slotStart, slotEnd);
         if (conflict) {
           return NextResponse.json({ error: "Cette salle est déjà réservée sur ce créneau." }, { status: 409 });
+        }
+        const dayCount = await countRoomUsageForDay(room, date);
+        if (dayCount >= MAX_SLOTS_PER_DAY) {
+          return NextResponse.json({ error: "Cette salle a atteint le maximum de 13 réservations pour cette journée." }, { status: 409 });
         }
       }
 
@@ -65,6 +94,10 @@ export async function POST(req: NextRequest) {
       const conflict = await hasRoomConflict(room, slotStart, slotEnd);
       if (conflict) {
         return NextResponse.json({ error: "Cette salle est déjà réservée sur ce créneau." }, { status: 409 });
+      }
+      const dayCount = await countRoomUsageForDay(room, date);
+      if (dayCount >= MAX_SLOTS_PER_DAY) {
+        return NextResponse.json({ error: "Cette salle a atteint le maximum de 13 réservations pour cette journée." }, { status: 409 });
       }
 
       await insertRoomReservation({

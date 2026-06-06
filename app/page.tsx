@@ -7,12 +7,13 @@ import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
 const DAYS = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
-const TODAY = 20;
-const CURRENT_MONTH = "2026-03";
+const EXPO_START = 15;
+const EXPO_END = 19;
+const CURRENT_MONTH = "2026-06";
 
 export default function CalendarPage() {
   const { reservations } = useStore();
-  const [selectedDay, setSelectedDay] = useState(TODAY);
+  const [selectedDay, setSelectedDay] = useState(EXPO_START);
 
   // Compute day statuses dynamically from reservations
   const dayStatuses = useMemo(() => {
@@ -31,7 +32,7 @@ export default function CalendarPage() {
   // Compute stats dynamically
   const stats = useMemo(() => {
     const thisMonth = reservations.filter(r => r.date.startsWith(CURRENT_MONTH));
-    const upcoming = reservations.filter(r => r.status !== "cancelled" && r.date >= "2026-03-20");
+    const upcoming = reservations.filter(r => r.status !== "cancelled" && r.date >= "2026-06-15");
     const confirmed = reservations.filter(r => r.status === "confirmed");
     const pending = reservations.filter(r => r.status === "pending");
     return [
@@ -50,14 +51,16 @@ export default function CalendarPage() {
 
   // Upcoming reservations (next 3 non-cancelled)
   const upcoming = useMemo(() =>
-    reservations.filter(r => r.status !== "cancelled" && r.date >= "2026-03-20").slice(0, 3),
+    reservations.filter(r => r.status !== "cancelled" && r.date >= "2026-06-15").slice(0, 3),
     [reservations]
   );
 
   function getDayClass(d: number) {
+    const isExpo = d >= EXPO_START && d <= EXPO_END;
     const isSelected = d === selectedDay;
     const s = dayStatuses[d];
-    if (!s) return cn("bg-secondary text-foreground hover:bg-muted", isSelected && "ring-2 ring-offset-1 ring-brand", d === TODAY && "font-bold underline");
+    if (!isExpo) return "bg-muted/20 text-muted-foreground/30 cursor-not-allowed";
+    if (!s) return cn("bg-secondary text-foreground hover:bg-muted", isSelected && "ring-2 ring-offset-1 ring-brand", d === EXPO_START && "font-bold underline");
     if (s.confirmed && s.pending) return cn("bg-gradient-to-br from-[#145847] to-[#b3ae41] text-white hover:opacity-80", isSelected && "ring-2 ring-offset-1 ring-brand");
     if (s.confirmed) return cn("bg-[#145847] text-white hover:opacity-80", isSelected && "ring-2 ring-offset-1 ring-[#145847]");
     if (s.pending) return cn("bg-[#b3ae41] text-white hover:opacity-80", isSelected && "ring-2 ring-offset-1 ring-[#b3ae41]");
@@ -69,7 +72,7 @@ export default function CalendarPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tableau de bord</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Mars 2026 — Vue calendrier</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Juin 2026 — Expo AFCAC (15–19 juin)</p>
         </div>
         <Link
           href="/nouvelle"
@@ -103,7 +106,7 @@ export default function CalendarPage() {
             <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-semibold text-foreground">Mars 2026</span>
+            <span className="font-semibold text-foreground">Juin 2026</span>
             <button className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground transition-colors">
               <ChevronRight className="w-4 h-4" />
             </button>
@@ -116,11 +119,11 @@ export default function CalendarPage() {
           </div>
 
           <div className="grid grid-cols-7 gap-1.5">
-            {[0, 1, 2].map(i => <div key={i} />)}
-            {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+            {Array.from({ length: 30 }, (_, i) => i + 1).map(d => (
               <button
                 key={d}
-                onClick={() => setSelectedDay(d)}
+                disabled={d < EXPO_START || d > EXPO_END}
+                onClick={() => d >= EXPO_START && d <= EXPO_END && setSelectedDay(d)}
                 className={cn("aspect-square rounded-lg flex items-center justify-center text-sm transition-all", getDayClass(d))}
               >
                 {d}
@@ -148,7 +151,7 @@ export default function CalendarPage() {
         <div className="col-span-2 flex flex-col gap-[10px]">
           <div className="bg-card rounded-2xl border border-border p-5 flex-1">
             <h2 className="text-sm font-semibold text-foreground mb-1">
-              {selectedDay === TODAY ? "Aujourd'hui" : `${selectedDay} mars 2026`}
+              {`${selectedDay} juin 2026`}
             </h2>
             <p className="text-xs text-muted-foreground mb-4">
               {selectedResas.length} réservation{selectedResas.length !== 1 ? "s" : ""}
