@@ -1,27 +1,21 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Bell, Mail, Zap, Moon, LogOut, CalendarDays, CheckCircle2, Clock } from "lucide-react";
+import { Bell, Mail, Zap, Moon, LogOut, CalendarDays, CheckCircle2, Clock, Lock } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import StatusBadge from "@/components/StatusBadge";
 
 function Toggle({ defaultOn = true }: { defaultOn?: boolean }) {
-  const [on, setOn] = useState(defaultOn);
   return (
-    <button
-      onClick={() => setOn(!on)}
-      className={cn("relative w-10 h-6 rounded-full transition-colors shrink-0", on ? "bg-brand" : "bg-muted border border-border")}
-    >
-      <span className={cn("absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform shadow-sm", on ? "translate-x-4" : "translate-x-0")} />
-    </button>
+    <div className={cn("relative w-10 h-6 rounded-full shrink-0 cursor-not-allowed opacity-50", defaultOn ? "bg-brand" : "bg-muted border border-border")}>
+      <span className={cn("absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow-sm", defaultOn ? "translate-x-4" : "translate-x-0")} />
+    </div>
   );
 }
 
 interface Me { name: string; email: string; avatarInitials: string; }
 
 export default function ProfilPage() {
-  const router = useRouter();
   const { reservations } = useStore();
   const [me, setMe] = useState<Me | null>(null);
   const TODAY = new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -91,10 +85,15 @@ export default function ProfilPage() {
         {/* Right columns */}
         <div className="col-span-2 flex flex-col gap-[10px]">
           {/* Preferences */}
-          <div className="bg-card rounded-2xl border border-border overflow-hidden">
-            <div className="px-6 py-4 border-b border-border">
-              <h3 className="font-semibold text-foreground">Préférences</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Configurez vos notifications et comportements par défaut</p>
+          <div className="bg-card rounded-2xl border border-border overflow-hidden opacity-60 pointer-events-none select-none">
+            <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-foreground">Préférences</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Ces options sont gérées par l'administrateur</p>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border">
+                <Lock className="w-3 h-3" /> Verrouillé
+              </div>
             </div>
             {[
               { icon: Bell, label: "Notifications push", desc: "Recevez des alertes instantanées dans le navigateur", defaultOn: true },
