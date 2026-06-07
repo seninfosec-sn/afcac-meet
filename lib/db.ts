@@ -210,6 +210,20 @@ export async function deleteUser(id: string): Promise<boolean> {
   return r.length > 0;
 }
 
+export async function deleteReservation(id: string, type: "bilateral" | "salle"): Promise<boolean> {
+  const r = type === "bilateral"
+    ? await sql`DELETE FROM meeting_invites WHERE id = ${id} RETURNING id`
+    : await sql`DELETE FROM room_reservations WHERE id = ${id} RETURNING id`;
+  return r.length > 0;
+}
+
+export async function deleteAllReservations(): Promise<void> {
+  await Promise.all([
+    sql`DELETE FROM meeting_invites`,
+    sql`DELETE FROM room_reservations`,
+  ]);
+}
+
 // ── Notifications ────────────────────────────────────────────────
 
 export type NotificationType =

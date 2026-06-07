@@ -23,7 +23,8 @@ export default function AdminPage() {
   const [error, setError]     = useState<string | null>(null);
   const [filter, setFilter]   = useState("Toutes");
   const [tab, setTab]         = useState<"reservations" | "users" | "rooms">("reservations");
-  const [updating, setUpdating] = useState<string | null>(null);
+  const [updating, setUpdating]   = useState<string | null>(null);
+  const [deleting, setDeleting]   = useState<string | "all" | null>(null);
 
   // Users
   const [editUser, setEditUser]   = useState<AdminUser | null>(null);
@@ -100,6 +101,26 @@ export default function AdminPage() {
     await fetchData();
     setEditUser(null);
     setUserAction(null);
+  }
+
+  async function handleDeleteReservation(id: string, type: "bilateral" | "salle", title: string) {
+    if (!window.confirm(`Supprimer la réservation "${title}" ? Cette action est irréversible.`)) return;
+    setDeleting(id);
+    await fetch("/api/admin/reservations", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, type }),
+    });
+    await fetchData(true);
+    setDeleting(null);
+  }
+
+  async function handleDeleteAllReservations() {
+    if (!window.confirm("Supprimer TOUTES les réservations ? Cette action est irréversible.")) return;
+    setDeleting("all");
+    await fetch("/api/admin/reservations", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    await fetchData(true);
+    setDeleting(null);
   }
 
   async function updateStatus(id: string, status: string, type: "bilateral" | "salle") {
@@ -349,41 +370,52 @@ export default function AdminPage() {
       {/* ── Reservations tab ── */}
       {tab === "reservations" && (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            {["Toutes", "Bilatérales"].map((f: string) => (
-              <button key={f} onClick={() => setFilter(f)}
-                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
-                  filter === f ? "bg-brand text-white border-brand" : "bg-card border-border text-muted-foreground hover:border-brand/40"
-                )}>
-                {f}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {["Toutes", "Bilatérales"].map((f: string) => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                    filter === f ? "bg-brand text-white border-brand" : "bg-card border-border text-muted-foreground hover:border-brand/40"
+                  )}>
+                  {f}
+                </button>
+              ))}
 
-            {reservedRooms.length > 0 && (
-              <>
-                <span className="text-border text-base select-none">|</span>
-                {reservedRooms.map((f: string) => (
-                  <button key={f} onClick={() => setFilter(f)}
-                    className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
-                      filter === f
-                        ? "bg-olive-dark text-white border-olive-dark"
-                        : "bg-card border-border text-muted-foreground hover:border-olive/60"
-                    )}>
-                    <DoorOpen className="w-3 h-3" />{f}
-                  </button>
-                ))}
-                <span className="text-border text-base select-none">|</span>
-              </>
-            )}
+              {reservedRooms.length > 0 && (
+                <>
+                  <span className="text-border text-base select-none">|</span>
+                  {reservedRooms.map((f: string) => (
+                    <button key={f} onClick={() => setFilter(f)}
+                      className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                        filter === f
+                          ? "bg-olive-dark text-white border-olive-dark"
+                          : "bg-card border-border text-muted-foreground hover:border-olive/60"
+                      )}>
+                      <DoorOpen className="w-3 h-3" />{f}
+                    </button>
+                  ))}
+                  <span className="text-border text-base select-none">|</span>
+                </>
+              )}
 
-            {["Confirmées", "En attente", "Proposées", "Annulées"].map((f: string) => (
-              <button key={f} onClick={() => setFilter(f)}
-                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
-                  filter === f ? "bg-brand text-white border-brand" : "bg-card border-border text-muted-foreground hover:border-brand/40"
-                )}>
-                {f}
-              </button>
-            ))}
+              {["Confirmées", "En attente", "Proposées", "Annulées"].map((f: string) => (
+                <button key={f} onClick={() => setFilter(f)}
+                  className={cn("px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors",
+                    filter === f ? "bg-brand text-white border-brand" : "bg-card border-border text-muted-foreground hover:border-brand/40"
+                  )}>
+                  {f}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={handleDeleteAllReservations}
+              disabled={deleting === "all" || reservations.length === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              {deleting === "all" ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+              Tout supprimer
+            </button>
           </div>
 
           <div className="bg-card rounded-2xl border border-border overflow-x-auto">
@@ -412,7 +444,7 @@ export default function AdminPage() {
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{r.startTime} – {r.endTime}</td>
                     <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
                     <td className="px-4 py-3">
-                      {updating === r.id ? (
+                      {updating === r.id || deleting === r.id ? (
                         <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
                       ) : (
                         <div className="flex items-center gap-1">
@@ -428,6 +460,13 @@ export default function AdminPage() {
                               Annuler
                             </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteReservation(r.id, r.type, r.title)}
+                            className="p-1.5 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       )}
                     </td>
