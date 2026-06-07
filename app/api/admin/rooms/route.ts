@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getAllRooms, createRoom } from "@/lib/db";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "seninfosec@gmail.com")
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "afcacexpo@gmail.com")
   .split(",").map(e => e.trim().toLowerCase());
 
 async function requireAdmin() {

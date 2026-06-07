@@ -12,7 +12,7 @@ const NAV = [
   { href: "/profil", icon: User, label: "Profil" },
 ];
 
-const ADMIN_EMAILS = ["seninfosec@gmail.com"];
+const ADMIN_EMAILS = ["afcacexpo@gmail.com"];
 
 interface SessionUser {
   name: string;

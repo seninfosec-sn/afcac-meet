@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { getAllReservations, getAllUsers } from "@/lib/db";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "seninfosec@gmail.com")
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "afcacexpo@gmail.com")
   .split(",").map(e => e.trim().toLowerCase());
 
 export async function GET() {
