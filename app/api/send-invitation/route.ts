@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transporter, FROM } from "@/lib/mailer";
+import { transporter, FROM, REPLY_TO } from "@/lib/mailer";
 
 export async function POST(req: NextRequest) {
   const { to, date, time, location, message, senderName } = await req.json();
@@ -10,34 +10,51 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://afcac-meet-main.vercel.app";
 
+  const textBody = [
+    senderName ? `${senderName} vous invite à une rencontre bilatérale.` : "Vous avez reçu une invitation à une rencontre bilatérale.",
+    "",
+    `Date     : ${date}`,
+    `Heure    : ${time}`,
+    `Lieu     : ${location}`,
+    message ? `\nMessage  : ${message}` : "",
+    "",
+    `Consultez vos réservations : ${appUrl}/reservations`,
+    "",
+    "---",
+    "AFCAC Official Bilateral Meetings Platform — AFCAC EXPO 2026",
+    "Si vous n'etes pas concerne par cet email, ignorez-le.",
+  ].filter(l => l !== undefined).join("\n");
+
   try {
     await transporter.sendMail({
       from: FROM,
       to,
-      subject: `Invitation à une rencontre bilatérale — ${date} à ${time}`,
+      replyTo: REPLY_TO,
+      subject: `Invitation a une rencontre bilaterale - ${date} a ${time}`,
+      text: textBody,
       html: `
-        <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
           <div style="background: #145847; padding: 24px 32px; border-radius: 10px 10px 0 0; text-align: center;">
             <img src="${appUrl}/afcac_logo.png" alt="AFCAC" style="height: 64px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto;" />
-            <p style="color: #a7d4c6; margin: 8px 0 0; font-size: 13px;">Invitation à une rencontre bilatérale</p>
+            <p style="color: #a7d4c6; margin: 8px 0 0; font-size: 13px;">Invitation a une rencontre bilaterale</p>
           </div>
           <div style="background: white; padding: 32px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">
-              ${senderName ? `<strong>${senderName}</strong> vous invite à une rencontre bilatérale.` : "Vous avez reçu une invitation à une rencontre bilatérale."}
+              ${senderName ? `<strong>${senderName}</strong> vous invite a une rencontre bilaterale.` : "Vous avez recu une invitation a une rencontre bilaterale."}
             </p>
 
             <div style="background: #f3faf7; border: 1px solid #d1e9e2; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px; width: 110px;">📅 Date</td>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px; width: 110px;">Date</td>
                   <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${date}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">🕐 Heure</td>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Heure</td>
                   <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${time}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">📍 Lieu</td>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Lieu</td>
                   <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${location}</td>
                 </tr>
               </table>
@@ -52,11 +69,12 @@ export async function POST(req: NextRequest) {
 
             <a href="${appUrl}/reservations"
                style="display: inline-block; background: #145847; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 600;">
-              Voir la réservation →
+              Voir la reservation
             </a>
 
             <p style="color: #9ca3af; font-size: 12px; margin-top: 32px; padding-top: 20px; border-top: 1px solid #f3f4f6;">
-              Cet email a été envoyé via Afcac-expo-meet. Si vous n'êtes pas concerné, ignorez ce message.
+              AFCAC Official Bilateral Meetings Platform — AFCAC EXPO 2026<br>
+              Si vous n'etes pas concerne par cet email, ignorez-le.
             </p>
           </div>
         </div>

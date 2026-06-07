@@ -37,33 +37,57 @@ async function sendConfirmationEmail(to: string, opts: {
   const isProposed  = opts.status === "proposed";
 
   const subject = isConfirmed
-    ? `✅ Réunion confirmée — ${opts.title}`
+    ? `Reunion confirmee - ${opts.title}`
     : isCancelled
-    ? `❌ Invitation refusée — ${opts.title}`
-    : `📅 Nouveau créneau proposé — ${opts.title}`;
+    ? `Invitation refusee - ${opts.title}`
+    : `Nouveau creneau propose - ${opts.title}`;
 
   const statusColor  = isConfirmed ? "#145847" : isCancelled ? "#dc2626" : "#d97706";
-  const statusBadge  = isConfirmed ? "✅ Confirmée" : isCancelled ? "❌ Refusée" : "📅 Nouveau créneau";
-  const statusMsg    = isConfirmed
-    ? `<strong>${opts.userName}</strong> a <strong>accepté</strong> votre invitation.`
+  const statusBadge  = isConfirmed ? "Reunion confirmee" : isCancelled ? "Invitation refusee" : "Nouveau creneau propose";
+  const statusMsgTxt = isConfirmed
+    ? `${opts.userName} a accepte votre invitation.`
     : isCancelled
-    ? `<strong>${opts.userName}</strong> a <strong>refusé</strong> votre invitation.`
-    : `<strong>${opts.userName}</strong> propose un <strong>nouveau créneau</strong>.`;
+    ? `${opts.userName} a refuse votre invitation.`
+    : `${opts.userName} propose un nouveau creneau.`;
+  const statusMsg    = isConfirmed
+    ? `<strong>${opts.userName}</strong> a <strong>accepte</strong> votre invitation.`
+    : isCancelled
+    ? `<strong>${opts.userName}</strong> a <strong>refuse</strong> votre invitation.`
+    : `<strong>${opts.userName}</strong> propose un <strong>nouveau creneau</strong>.`;
+
+  const slotTxt = isProposed && opts.proposedDate
+    ? `Nouveau creneau : ${opts.proposedDate} de ${opts.proposedStartTime} a ${opts.proposedEndTime}`
+    : `Date    : ${date}\nHoraire : ${startTime} - ${endTime}`;
 
   const slotBlock = isProposed && opts.proposedDate
-    ? `<tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:110px;">📅 Nouveau créneau</td>
-       <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${opts.proposedDate} · ${opts.proposedStartTime} – ${opts.proposedEndTime}</td></tr>`
-    : `<tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:110px;">📅 Date</td>
+    ? `<tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:110px;">Nouveau creneau</td>
+       <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${opts.proposedDate} - ${opts.proposedStartTime} a ${opts.proposedEndTime}</td></tr>`
+    : `<tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:110px;">Date</td>
        <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${date}</td></tr>
-       <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">🕐 Horaire</td>
-       <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${startTime} – ${endTime}</td></tr>`;
+       <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">Horaire</td>
+       <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${startTime} - ${endTime}</td></tr>`;
+
+  const textBody = [
+    statusMsgTxt,
+    "",
+    `Reunion : ${opts.title}`,
+    slotTxt,
+    `Lieu    : ${opts.location}`,
+    "",
+    `Consultez vos reservations : ${appUrl}/reservations`,
+    "",
+    "---",
+    "AFCAC Official Bilateral Meetings Platform — AFCAC EXPO 2026",
+  ].join("\n");
 
   await transporter.sendMail({
     from: FROM,
     to,
+    replyTo: FROM,
     subject,
+    text: textBody,
     html: `
-      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
+      <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px;background:#f9fafb;border-radius:12px;">
         <div style="background:${statusColor};padding:24px 32px;border-radius:10px 10px 0 0;text-align:center;">
           <img src="${appUrl}/afcac_logo.png" alt="AFCAC" style="height:64px;max-width:220px;object-fit:contain;display:block;margin:0 auto;" />
           <p style="color:rgba(255,255,255,0.85);margin:8px 0 0;font-size:13px;">${statusBadge}</p>
@@ -72,10 +96,10 @@ async function sendConfirmationEmail(to: string, opts: {
           <p style="color:#374151;font-size:15px;margin:0 0 24px;">${statusMsg}</p>
           <div style="background:#f3faf7;border:1px solid #d1e9e2;border-radius:8px;padding:20px;margin-bottom:24px;">
             <table style="width:100%;border-collapse:collapse;">
-              <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:110px;">📋 Réunion</td>
+              <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;width:110px;">Reunion</td>
                   <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${opts.title}</td></tr>
               ${slotBlock}
-              <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">📍 Lieu</td>
+              <tr><td style="padding:6px 0;color:#6b7280;font-size:13px;">Lieu</td>
                   <td style="padding:6px 0;color:#111827;font-size:14px;font-weight:600;">${opts.location}</td></tr>
             </table>
           </div>

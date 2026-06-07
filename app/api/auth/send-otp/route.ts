@@ -32,9 +32,20 @@ export async function POST(req: NextRequest) {
     await transporter.sendMail({
       from: FROM,
       to: email,
-      subject: "Votre code de connexion Afcac-expo-meet",
+      subject: "Code de connexion AFCAC Bilateral Meetings Platform",
+      text: [
+        "Votre code de connexion AFCAC Bilateral Meetings Platform :",
+        "",
+        `   ${otp}`,
+        "",
+        "Ce code expire dans 10 minutes.",
+        "Si vous n'avez pas demande ce code, ignorez cet email.",
+        "",
+        "---",
+        "AFCAC Official Bilateral Meetings Platform",
+      ].join("\n"),
       html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+        <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
           <div style="background: #145847; padding: 20px 28px; border-radius: 10px 10px 0 0; text-align: center;">
             <img src="${appUrl}/afcac_logo.png" alt="AFCAC" style="height: 64px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto;" />
           </div>
@@ -44,7 +55,7 @@ export async function POST(req: NextRequest) {
               <span style="font-size: 40px; font-weight: 800; letter-spacing: 12px; color: #145847;">${otp}</span>
             </div>
             <p style="color: #6b7280; font-size: 13px; margin: 0 0 8px;">Ce code expire dans <strong>10 minutes</strong>.</p>
-            <p style="color: #9ca3af; font-size: 12px; margin: 0;">Si vous n'avez pas demandé ce code, ignorez cet email.</p>
+            <p style="color: #9ca3af; font-size: 12px; margin: 0;">Si vous n'avez pas demande ce code, ignorez cet email.</p>
           </div>
         </div>
       `,
