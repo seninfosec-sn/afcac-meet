@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Share2, CheckCircle2 } from "lucide-react";
 import { Reservation } from "@/lib/data";
+import { useLanguage } from "@/contexts/LanguageContext";
 import StatusBadge from "./StatusBadge";
 
 interface Props {
@@ -29,14 +30,15 @@ function drawQR(canvas: HTMLCanvasElement) {
 }
 
 export default function QRModal({ reservation, onClose }: Props) {
+  const { t } = useLanguage();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [checked, setChecked] = useState(false);
   const [secs, setSecs] = useState(900);
 
   useEffect(() => {
     if (canvasRef.current) drawQR(canvasRef.current);
-    const t = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setSecs(s => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const min = Math.floor(secs / 60), sec = secs % 60;
@@ -44,15 +46,12 @@ export default function QRModal({ reservation, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
-      <div
-        className="bg-card rounded-2xl border border-border w-full max-w-sm overflow-hidden animate-slide-up"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
+      <div className="bg-card rounded-2xl border border-border w-full max-w-sm overflow-hidden animate-slide-up"
+        onClick={e => e.stopPropagation()}>
         <div className="bg-[#145847] px-5 py-4 flex items-center justify-between">
           <div>
-            <p className="text-white font-semibold text-base">Check-in QR</p>
-            <p className="text-white/70 text-xs mt-0.5">Présentez ce code à l'entrée</p>
+            <p className="text-white font-semibold text-base">{t.qr.title}</p>
+            <p className="text-white/70 text-xs mt-0.5">{t.qr.subtitle}</p>
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white transition-colors">
             <X className="w-5 h-5" />
@@ -60,7 +59,6 @@ export default function QRModal({ reservation, onClose }: Props) {
         </div>
 
         <div className="p-5 flex flex-col gap-4">
-          {/* Recap */}
           <div className="flex items-center justify-between p-3 bg-muted rounded-xl">
             <div>
               <p className="text-sm font-medium">{reservation.title}</p>
@@ -69,12 +67,10 @@ export default function QRModal({ reservation, onClose }: Props) {
             <StatusBadge status={reservation.status} />
           </div>
 
-          {/* QR */}
           {!checked ? (
             <>
               <div className="flex justify-center">
                 <div className="p-4 border-2 border-border rounded-xl relative">
-                  {/* Corner decorators */}
                   <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#145847] rounded-tl" />
                   <div className="absolute top-2 right-2 w-4 h-4 border-t-2 border-r-2 border-[#145847] rounded-tr" />
                   <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-[#145847] rounded-bl" />
@@ -85,15 +81,18 @@ export default function QRModal({ reservation, onClose }: Props) {
 
               <p className="text-center text-xs font-mono text-muted-foreground">{id}</p>
 
-              {/* Status */}
               <div className="flex items-center justify-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#145847] animate-pulse" />
-                <span className="text-sm font-medium text-[#145847]">En attente de scan</span>
+                <span className="text-sm font-medium text-[#145847]">{t.qr.waiting}</span>
               </div>
 
-              {/* Info grid */}
               <div className="grid grid-cols-2 gap-2">
-                {[["Réservation", "Confirmée"], ["Expire dans", `${min}:${sec.toString().padStart(2, "0")}`], ["Participants", "2 personnes"], ["Type", reservation.type === "bilateral" ? "Bilatérale" : "Salle"]].map(([l, v]) => (
+                {[
+                  [t.qr.reservation, t.qr.confirmed],
+                  [t.qr.expiresIn, `${min}:${sec.toString().padStart(2, "0")}`],
+                  [t.qr.participants, "2"],
+                  [t.qr.type, reservation.type === "bilateral" ? t.qr.bilateral : t.qr.room],
+                ].map(([l, v]) => (
                   <div key={l} className="bg-muted rounded-lg p-3">
                     <p className="text-xs text-muted-foreground">{l}</p>
                     <p className="text-sm font-medium mt-0.5">{v}</p>
@@ -101,17 +100,14 @@ export default function QRModal({ reservation, onClose }: Props) {
                 ))}
               </div>
 
-              {/* Actions */}
-              <button
-                onClick={() => setChecked(true)}
-                className="w-full bg-[#145847] text-white py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
+              <button onClick={() => setChecked(true)}
+                className="w-full bg-[#145847] text-white py-3 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                Simuler le scan
+                {t.qr.simulate}
               </button>
               <button className="w-full border border-border py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2">
                 <Share2 className="w-4 h-4" />
-                Partager le QR code
+                {t.qr.share}
               </button>
             </>
           ) : (
@@ -120,11 +116,11 @@ export default function QRModal({ reservation, onClose }: Props) {
                 <CheckCircle2 className="w-8 h-8 text-brand" />
               </div>
               <div className="text-center">
-                <p className="font-semibold text-lg text-brand">Check-in réussi !</p>
-                <p className="text-sm text-muted-foreground mt-1">Votre présence a été enregistrée.<br />Bonne réunion !</p>
+                <p className="font-semibold text-lg text-brand">{t.qr.successTitle}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t.qr.successMsg}<br />{t.qr.goodMeeting}</p>
               </div>
               <button onClick={onClose} className="bg-brand text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:opacity-90 transition-opacity">
-                Fermer
+                {t.qr.close}
               </button>
             </div>
           )}
