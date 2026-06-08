@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow } from "next/font/google";
 import { StoreProvider } from "@/lib/store";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import AppShell from "@/components/AppShell";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -21,10 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={barlow.variable}>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <StoreProvider>
-          <AppShell>{children}</AppShell>
-          <Toaster position="bottom-right" richColors closeButton />
-        </StoreProvider>
+        <LanguageProvider>
+          <StoreProvider>
+            <AppShell>{children}</AppShell>
+            <Toaster position="bottom-right" richColors closeButton />
+          </StoreProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

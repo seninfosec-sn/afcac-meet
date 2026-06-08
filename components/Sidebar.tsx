@@ -4,15 +4,11 @@ import { usePathname } from "next/navigation";
 import { Calendar, ClipboardList, Plus, User, Bell, LogOut, ShieldCheck, Check, Users, CalendarClock, DoorOpen, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState, useRef, useCallback } from "react";
-
-const NAV = [
-  { href: "/", icon: Calendar, label: "Calendrier" },
-  { href: "/reservations", icon: ClipboardList, label: "Mes réservations" },
-  { href: "/nouvelle", icon: Plus, label: "Nouvelle réservation" },
-  { href: "/profil", icon: User, label: "Profil" },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Lang } from "@/lib/i18n";
 
 const ADMIN_EMAILS = ["afcacexpo@gmail.com"];
+const LANGS: Lang[] = ["EN", "FR", "PT"];
 
 interface SessionUser {
   name: string;
@@ -38,12 +34,12 @@ const TYPE_ICON: Record<AppNotification["type"], React.ReactNode> = {
   room_created: <DoorOpen className="w-4 h-4 text-olive-dark" />,
 };
 
-function timeAgo(dateStr: string) {
+function timeAgo(dateStr: string, t: ReturnType<typeof useLanguage>["t"]) {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
-  if (diff < 60) return "à l'instant";
-  if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
-  if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
-  return `il y a ${Math.floor(diff / 86400)} j`;
+  if (diff < 60) return t.timeAgo.justNow;
+  if (diff < 3600) return t.timeAgo.minutesAgo(Math.floor(diff / 60));
+  if (diff < 86400) return t.timeAgo.hoursAgo(Math.floor(diff / 3600));
+  return t.timeAgo.daysAgo(Math.floor(diff / 86400));
 }
 
 interface SidebarProps {
@@ -53,12 +49,20 @@ interface SidebarProps {
 
 export default function Sidebar({ open = false, onClose }: SidebarProps) {
   const path = usePathname();
+  const { lang, setLang, t } = useLanguage();
   const [user, setUser] = useState<SessionUser | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
+
+  const NAV = [
+    { href: "/",             icon: Calendar,      label: t.sidebar.calendar },
+    { href: "/reservations", icon: ClipboardList, label: t.sidebar.reservations },
+    { href: "/nouvelle",     icon: Plus,          label: t.sidebar.newReservation },
+    { href: "/profil",       icon: User,          label: t.sidebar.profile },
+  ];
 
   const fetchNotifications = useCallback(async () => {
     const res = await fetch("/api/notifications");
@@ -77,7 +81,6 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  // Close panel on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -107,15 +110,32 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
       "transition-transform duration-300 ease-in-out",
       open ? "translate-x-0" : "-translate-x-full md:translate-x-0"
     )}>
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-border flex items-center justify-between">
+      {/* Logo + language switcher */}
+      <div className="px-6 py-5 border-b border-border flex items-center justify-between">
         <div>
           <span className="text-xl font-bold text-brand tracking-tight">OFFICIAL BILATERAL MEETINGS PLATFORM</span>
-          <p className="text-xs text-muted-foreground mt-0.5">Gestion de réservations</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t.sidebar.subtitle}</p>
+          {/* Language switcher */}
+          <div className="flex items-center gap-1 mt-2">
+            {LANGS.map(l => (
+              <button
+                key={l}
+                onClick={() => setLang(l)}
+                className={cn(
+                  "px-2 py-0.5 rounded text-[11px] font-semibold border transition-colors",
+                  lang === l
+                    ? "bg-brand text-white border-brand"
+                    : "text-muted-foreground border-border hover:border-brand/40 hover:text-foreground"
+                )}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           onClick={onClose}
-          className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors"
+          className="md:hidden p-1.5 rounded-lg hover:bg-muted transition-colors shrink-0"
           aria-label="Fermer le menu"
         >
           <X className="w-4 h-4" />
@@ -140,7 +160,6 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
           );
         })}
 
-        {/* Admin link */}
         {user && ADMIN_EMAILS.includes(user.email.toLowerCase()) && (
           <Link href="/admin"
             className={cn(
@@ -151,28 +170,24 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
             )}
           >
             <ShieldCheck className="w-4 h-4 shrink-0" />
-            Panel Admin
+            {t.sidebar.admin}
           </Link>
         )}
       </nav>
 
       {/* Bottom — notifications + logout + user */}
       <div className="px-3 pb-4 border-t border-border pt-3 flex flex-col gap-0.5 relative" ref={panelRef}>
-        {/* Notification panel */}
         {panelOpen && (
           <div className="absolute bottom-full left-0 right-0 mb-2 mx-1 bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-sm font-semibold">Notifications</span>
-              <button
-                onClick={() => setPanelOpen(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
+              <span className="text-sm font-semibold">{t.sidebar.notifications}</span>
+              <button onClick={() => setPanelOpen(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="w-3.5 h-3.5" />
               </button>
             </div>
             <div className="max-h-80 overflow-y-auto divide-y divide-border">
               {notifications.length === 0 ? (
-                <p className="text-center text-sm text-muted-foreground py-8">Aucune notification</p>
+                <p className="text-center text-sm text-muted-foreground py-8">{t.sidebar.noNotifications}</p>
               ) : (
                 notifications.map(n => (
                   <div key={n.id} className={cn("flex gap-3 px-4 py-3", !n.read && "bg-brand/5")}>
@@ -182,7 +197,7 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-foreground leading-tight">{n.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{n.message}</p>
-                      <p className="text-[10px] text-muted-foreground/70 mt-1">{timeAgo(n.created_at)}</p>
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">{timeAgo(n.created_at, t)}</p>
                     </div>
                   </div>
                 ))
@@ -191,7 +206,6 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
           </div>
         )}
 
-        {/* Bell button */}
         <button
           onClick={handleOpenPanel}
           className={cn(
@@ -200,7 +214,7 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
           )}
         >
           <Bell className="w-4 h-4 shrink-0" />
-          Notifications
+          {t.sidebar.notifications}
           {unreadCount > 0 && (
             <span className="ml-auto bg-brand text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
               {unreadCount > 9 ? "9+" : unreadCount}
@@ -208,16 +222,14 @@ export default function Sidebar({ open = false, onClose }: SidebarProps) {
           )}
         </button>
 
-        {/* Logout */}
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors w-full"
         >
           <LogOut className="w-4 h-4 shrink-0" />
-          Se déconnecter
+          {t.sidebar.logout}
         </button>
 
-        {/* User card */}
         <div className="flex items-center gap-3 px-3 py-3 mt-1 border-t border-border">
           <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-sm font-semibold shrink-0">
             {user?.avatarInitials ?? "??"}

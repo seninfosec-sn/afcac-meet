@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Users, DoorOpen, Check, Loader2, Wifi, Lock } from "lucide-react";
 import { Reservation } from "@/lib/data";
 import { useStore } from "@/lib/store";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -60,6 +61,7 @@ function isRoomConflict(
 export default function NouvellePage() {
   const router = useRouter();
   const { reservations, refresh } = useStore();
+  const { t } = useLanguage();
 
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [type, setType] = useState<ReservationType>("bilateral");
@@ -67,16 +69,12 @@ export default function NouvellePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Shared fields
   const [date, setDate] = useState("2026-06-15");
   const [time, setTime] = useState("08:00");
-  const [selectedRoom, setSelectedRoom] = useState("visio"); // "visio" or room id
+  const [selectedRoom, setSelectedRoom] = useState("visio");
 
-  // Bilateral-only fields
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-
-  // Salle-only fields
   const [subject, setSubject] = useState("");
 
   const endTime = addMinutes(time, SLOT_DURATION);
@@ -88,7 +86,6 @@ export default function NouvellePage() {
       .catch(() => {});
   }, []);
 
-  // Compute which rooms have a slot conflict for current date/time
   const bookedRooms = useMemo(() =>
     rooms.reduce<Record<string, boolean>>((acc, room) => {
       acc[room.id] = isRoomConflict(room.id, date, time, endTime, reservations);
@@ -97,7 +94,6 @@ export default function NouvellePage() {
     [rooms, date, time, endTime, reservations]
   );
 
-  // Count reservations per room for the selected day (max 13)
   const roomDayCount = useMemo(() =>
     rooms.reduce<Record<string, number>>((acc, room) => {
       acc[room.id] = reservations.filter(
@@ -114,8 +110,8 @@ export default function NouvellePage() {
 
     if (selectedRoom !== "visio" && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 13)) {
       setError((roomDayCount[selectedRoom] ?? 0) >= 13
-        ? "Cette salle a atteint le maximum de 13 réservations pour cette journée."
-        : "Ce créneau est déjà pris pour cette salle. Veuillez en choisir un autre.");
+        ? t.newRes.errorMaxSlots
+        : t.newRes.errorSlotTaken);
       return;
     }
 
@@ -124,7 +120,6 @@ export default function NouvellePage() {
     const roomName = selectedRoom === "visio" ? "Visio" : rooms.find(r => r.id === selectedRoom)?.name ?? "";
     const room = rooms.find(r => r.id === selectedRoom);
 
-    // Save to DB via API
     const res = await fetch("/api/reservations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -147,14 +142,13 @@ export default function NouvellePage() {
     if (!res.ok) {
       try {
         const data = await res.json();
-        setError(data.error ?? "Erreur lors de la création.");
+        setError(data.error ?? t.newRes.errorCreation);
       } catch {
-        setError("Erreur lors de la création. Veuillez réessayer.");
+        setError(t.newRes.errorCreation);
       }
       return;
     }
 
-    // Send invitation email for bilateral
     if (type === "bilateral") {
       const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
@@ -176,8 +170,8 @@ export default function NouvellePage() {
 
     refresh();
     toast.success(
-      type === "bilateral" ? "Invitation envoyée !" : "Salle réservée !",
-      { description: type === "bilateral" ? `Un email a été envoyé à ${email}.` : `Votre réservation a été enregistrée.` }
+      type === "bilateral" ? t.newRes.successInvite : t.newRes.successRoom,
+      { description: type === "bilateral" ? `${t.newRes.emailSentTo} ${email}.` : t.newRes.resSaved }
     );
     setSubmitted(true);
     setTimeout(() => router.push("/reservations"), 2000);
@@ -189,10 +183,10 @@ export default function NouvellePage() {
         <div className="w-20 h-20 rounded-full bg-brand-light flex items-center justify-center">
           <Check className="w-10 h-10 text-brand" />
         </div>
-        <h2 className="text-xl font-bold text-brand">Demande envoyée !</h2>
+        <h2 className="text-xl font-bold text-brand">{t.newRes.sentTitle}</h2>
         <p className="text-muted-foreground text-sm text-center">
-          {type === "bilateral" ? "Un email de notification a été envoyé à l'invité." : "La salle a été réservée."}
-          <br />Redirection en cours…
+          {type === "bilateral" ? t.newRes.sentBilateral : t.newRes.sentRoom}
+          <br />{t.newRes.redirecting}
         </p>
       </div>
     );
@@ -201,32 +195,31 @@ export default function NouvellePage() {
   return (
     <div className="flex flex-col gap-[10px]">
       <div>
-        <h1 className="text-2xl font-bold">Nouvelle réservation</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Choisissez le type de réservation à créer</p>
+        <h1 className="text-2xl font-bold">{t.newRes.title}</h1>
+        <p className="text-sm text-muted-foreground mt-0.5">{t.newRes.subtitle}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-[10px]">
-        {/* Left column */}
         <div className="flex flex-col gap-[10px]">
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Type de réservation</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{t.newRes.typeSection}</h2>
           <div className="flex flex-col gap-[10px]">
             {([
-              ["bilateral", Users, "Rencontre bilatérale", "Accord mutuel requis des deux parties"],
-              ["salle", DoorOpen, "Réservation de salle", "Disponibilité des salles en temps réel"],
-            ] as const).map(([t, Icon, label, desc]) => (
+              ["bilateral", Users, t.newRes.bilateralLabel, t.newRes.bilateralDesc],
+              ["salle", DoorOpen, t.newRes.roomLabel, t.newRes.roomDesc],
+            ] as const).map(([rtype, Icon, label, desc]) => (
               <button
-                key={t}
-                onClick={() => { setType(t); setSelectedRoom(t === "bilateral" ? "visio" : "a"); }}
+                key={rtype}
+                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "visio" : "a"); }}
                 className={cn(
                   "flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left",
-                  type === t ? "border-brand bg-brand-light" : "border-border bg-card hover:border-brand/30"
+                  type === rtype ? "border-brand bg-brand-light" : "border-border bg-card hover:border-brand/30"
                 )}
               >
-                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5", type === t ? "bg-brand" : "bg-muted")}>
-                  <Icon className={cn("w-5 h-5", type === t ? "text-white" : "text-muted-foreground")} />
+                <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 mt-0.5", type === rtype ? "bg-brand" : "bg-muted")}>
+                  <Icon className={cn("w-5 h-5", type === rtype ? "text-white" : "text-muted-foreground")} />
                 </div>
                 <div>
-                  <p className={cn("text-sm font-semibold", type === t ? "text-brand" : "text-foreground")}>{label}</p>
+                  <p className={cn("text-sm font-semibold", type === rtype ? "text-brand" : "text-foreground")}>{label}</p>
                   <p className="text-xs text-muted-foreground mt-1">{desc}</p>
                 </div>
               </button>
@@ -235,40 +228,33 @@ export default function NouvellePage() {
 
           <div className="p-4 rounded-xl bg-muted/50 border border-border">
             <p className="text-xs font-semibold text-muted-foreground mb-1">
-              {type === "bilateral" ? "Comment ça marche ?" : "Disponibilités en temps réel"}
+              {type === "bilateral" ? t.newRes.howItWorksBilateral : t.newRes.howItWorksRoom}
             </p>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {type === "bilateral"
-                ? "Envoyez une invitation à un collègue. Il recevra un email de notification et pourra accepter ou proposer un autre créneau."
-                : "Les salles affichent leur disponibilité en direct. Votre réservation est immédiatement prise en compte dans le calendrier partagé."}
+              {type === "bilateral" ? t.newRes.descBilateral : t.newRes.descRoom}
             </p>
           </div>
         </div>
 
-        {/* Right column — form */}
         <div className="md:col-span-2 bg-card rounded-2xl border border-border p-4 md:p-8">
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-6">
-            {type === "bilateral" ? "Détails de la rencontre" : "Détails de la réservation"}
+            {type === "bilateral" ? t.newRes.detailsBilateral : t.newRes.detailsRoom}
           </h2>
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-              {error}
-            </div>
+            <div className="mb-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">{error}</div>
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-[10px]">
-
-            {/* ── Créneau (commun aux deux types) ── */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Date</label>
+                <label className="text-sm font-medium">{t.newRes.date}</label>
                 <input type="date" required value={date} onChange={e => setDate(e.target.value)}
                   min="2026-06-15" max="2026-06-19"
                   className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Créneau <span className="text-muted-foreground font-normal">(45 min)</span></label>
+                <label className="text-sm font-medium">{t.newRes.slot} <span className="text-muted-foreground font-normal">{t.newRes.slotMin}</span></label>
                 <select value={time} onChange={e => setTime(e.target.value)}
                   className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors">
                   {SLOTS.map(s => (
@@ -278,78 +264,60 @@ export default function NouvellePage() {
               </div>
             </div>
 
-            {/* ── Sélection de salle (commun) ── */}
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">
-                  {type === "bilateral" ? "Lieu de la rencontre" : "Choisir une salle"}
+                  {type === "bilateral" ? t.newRes.meetingLocation : t.newRes.chooseRoom}
                 </label>
-                <span className="text-xs text-muted-foreground">
-                  {time} → {endTime}
-                </span>
+                <span className="text-xs text-muted-foreground">{time} → {endTime}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
-                {/* Option Visio uniquement pour bilatéral */}
                 {type === "bilateral" && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedRoom("visio")}
+                  <button type="button" onClick={() => setSelectedRoom("visio")}
                     className={cn(
                       "flex flex-col items-start gap-1 p-4 rounded-xl border-2 transition-all text-left",
-                      selectedRoom === "visio"
-                        ? "border-brand bg-brand-light"
-                        : "border-border bg-background hover:border-brand/30"
-                    )}
-                  >
+                      selectedRoom === "visio" ? "border-brand bg-brand-light" : "border-border bg-background hover:border-brand/30"
+                    )}>
                     <div className="flex items-center gap-2">
                       <Wifi className={cn("w-4 h-4", selectedRoom === "visio" ? "text-brand" : "text-muted-foreground")} />
-                      <p className={cn("text-sm font-semibold", selectedRoom === "visio" ? "text-brand" : "text-foreground")}>
-                        Visio
-                      </p>
+                      <p className={cn("text-sm font-semibold", selectedRoom === "visio" ? "text-brand" : "text-foreground")}>Visio</p>
                     </div>
                     <p className="text-xs text-muted-foreground">Lien Meet, Teams, Zoom…</p>
                   </button>
                 )}
 
-                {/* Salles physiques */}
                 {rooms.map(room => {
                   const slotBooked = bookedRooms[room.id];
                   const dayFull = (roomDayCount[room.id] ?? 0) >= 13;
                   const unavailable = slotBooked || dayFull || room.locked;
                   const active = selectedRoom === room.id;
                   return (
-                    <button
-                      key={room.id}
-                      type="button"
-                      disabled={unavailable}
+                    <button key={room.id} type="button" disabled={unavailable}
                       onClick={() => !unavailable && setSelectedRoom(room.id)}
                       className={cn(
                         "flex flex-col items-start gap-1 p-4 rounded-xl border-2 transition-all text-left",
-                        unavailable
-                          ? "border-border bg-muted/40 opacity-50 cursor-not-allowed"
-                          : active
-                          ? "border-[#b3ae41] bg-olive-light"
+                        unavailable ? "border-border bg-muted/40 opacity-50 cursor-not-allowed"
+                          : active ? "border-[#b3ae41] bg-olive-light"
                           : "border-border bg-background hover:border-[#b3ae41]/40"
-                      )}
-                    >
+                      )}>
                       <div className="flex items-center justify-between w-full">
                         <p className={cn("text-sm font-semibold", unavailable ? "text-muted-foreground" : active ? "text-olive-dark" : "text-foreground")}>
                           {room.name}
                         </p>
                         {room.locked && (
                           <span className="flex items-center gap-1 text-[10px] text-orange-600 bg-orange-50 border border-orange-200 px-1.5 py-0.5 rounded-full">
-                            <Lock className="w-2.5 h-2.5" /> Verrouillée
+                            <Lock className="w-2.5 h-2.5" /> {t.newRes.locked}
                           </span>
                         )}
                         {!room.locked && dayFull && (
                           <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
-                            <Lock className="w-2.5 h-2.5" /> Complet
+                            <Lock className="w-2.5 h-2.5" /> {t.newRes.full}
                           </span>
                         )}
                         {!room.locked && !dayFull && slotBooked && (
                           <span className="flex items-center gap-1 text-[10px] text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded-full">
-                            <Lock className="w-2.5 h-2.5" /> Créneau pris
+                            <Lock className="w-2.5 h-2.5" /> {t.newRes.slotTaken}
                           </span>
                         )}
                       </div>
@@ -365,36 +333,34 @@ export default function NouvellePage() {
               </div>
             </div>
 
-            {/* ── Champs spécifiques bilatéral ── */}
             {type === "bilateral" && (
               <>
                 {selectedRoom === "visio" && (
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Lien de la visio</label>
-                    <input type="text" placeholder="https://meet.google.com/…"
+                    <label className="text-sm font-medium">{t.newRes.visioLink}</label>
+                    <input type="text" placeholder={t.newRes.visioPlaceholder}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
                   </div>
                 )}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Inviter (email)</label>
-                  <input type="email" placeholder="fatou.diallo@exemple.sn" required
+                  <label className="text-sm font-medium">{t.newRes.invite}</label>
+                  <input type="email" placeholder={t.newRes.invitePlaceholder} required
                     value={email} onChange={e => setEmail(e.target.value)}
                     className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">Message d'invitation</label>
-                  <textarea placeholder="Bonjour, je propose qu'on se retrouve…" rows={3}
+                  <label className="text-sm font-medium">{t.newRes.inviteMessage}</label>
+                  <textarea placeholder={t.newRes.inviteMsgPlaceholder} rows={3}
                     value={message} onChange={e => setMessage(e.target.value)}
                     className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors resize-none" />
                 </div>
               </>
             )}
 
-            {/* ── Champs spécifiques salle ── */}
             {type === "salle" && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium">Objet de la réservation</label>
-                <input type="text" placeholder="Ex : Atelier design, Formation…" required
+                <label className="text-sm font-medium">{t.newRes.subject}</label>
+                <input type="text" placeholder={t.newRes.subjectPlaceholder} required
                   value={subject} onChange={e => setSubject(e.target.value)}
                   className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
               </div>
@@ -404,11 +370,11 @@ export default function NouvellePage() {
               <button type="submit" disabled={loading}
                 className="flex items-center gap-2 bg-brand text-white px-8 py-2.5 rounded-lg text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed">
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                {loading ? "Envoi en cours…" : "Envoyer la demande"}
+                {loading ? t.newRes.sending : t.newRes.send}
               </button>
               <button type="button" onClick={() => router.back()}
                 className="px-6 py-2.5 rounded-lg text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-brand/40 transition-colors">
-                Annuler
+                {t.newRes.cancel}
               </button>
             </div>
           </form>
