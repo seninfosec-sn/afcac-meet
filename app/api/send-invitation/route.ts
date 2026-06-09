@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { transporter, FROM, REPLY_TO } from "@/lib/mailer";
+import { sendMail, FROM, REPLY_TO } from "@/lib/mailer";
 
 export async function POST(req: NextRequest) {
   const { to, date, time, location, message, senderName } = await req.json();
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   ].filter(l => l !== undefined).join("\n");
 
   try {
-    await transporter.sendMail({
+    await sendMail({
       from: FROM,
       to,
       replyTo: REPLY_TO,

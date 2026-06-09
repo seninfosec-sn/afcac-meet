@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SignJWT } from "jose";
-import { transporter, FROM } from "@/lib/mailer";
+import { sendMail, FROM } from "@/lib/mailer";
 
 const SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "afcac-expo-meet-super-secret-jwt-key-change-in-production-2026"
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://afcac-meet-main.vercel.app";
 
   try {
-    await transporter.sendMail({
+    await sendMail({
       from: FROM,
       to: email,
       subject: "Code de connexion AFCAC Bilateral Meetings Platform",

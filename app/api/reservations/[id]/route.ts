@@ -7,7 +7,7 @@ import {
   getMeetingById,
   insertNotification,
 } from "@/lib/db";
-import { transporter, FROM } from "@/lib/mailer";
+import { sendMail, FROM } from "@/lib/mailer";
 
 function formatDateTime(isoString: string) {
   const d = new Date(isoString);
@@ -80,7 +80,7 @@ async function sendConfirmationEmail(to: string, opts: {
     "AFCAC Official Bilateral Meetings Platform — AFCAC EXPO 2026",
   ].join("\n");
 
-  await transporter.sendMail({
+  await sendMail({
     from: FROM,
     to,
     replyTo: FROM,

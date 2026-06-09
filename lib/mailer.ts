@@ -1,17 +1,25 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const GMAIL_USER = process.env.GMAIL_USER || "afcacexpo@gmail.com";
-const GMAIL_PASS = process.env.GMAIL_APP_PASSWORD || "";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: GMAIL_USER, pass: GMAIL_PASS },
-  pool: true,
-  maxConnections: 3,
-  rateDelta: 1000,
-  rateLimit: 5,
-});
+export const FROM     = "AFCAC Bilateral Meetings <onboarding@resend.dev>";
+export const REPLY_TO = "afcacexpo@gmail.com";
 
-export const FROM       = `AFCAC Bilateral Meetings <${GMAIL_USER}>`;
-export const REPLY_TO   = GMAIL_USER;
-export const GMAIL_ADDR = GMAIL_USER;
+export async function sendMail(opts: {
+  from?: string;
+  to: string;
+  replyTo?: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}) {
+  const { error } = await resend.emails.send({
+    from:    opts.from    ?? FROM,
+    to:      [opts.to],
+    replyTo: opts.replyTo ?? REPLY_TO,
+    subject: opts.subject,
+    text:    opts.text,
+    html:    opts.html,
+  });
+  if (error) throw new Error(error.message);
+}
