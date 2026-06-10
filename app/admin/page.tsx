@@ -52,15 +52,17 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/reservations");
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        if (!silent) setError(d.error ?? "Accès refusé ou erreur serveur");
+        const text = await res.text().catch(() => "");
+        let msg = "";
+        try { msg = JSON.parse(text).error ?? ""; } catch { msg = text.slice(0, 120); }
+        if (!silent) setError(`[${res.status}] ${msg || "Erreur serveur"}`);
         setLoading(false);
         return;
       }
       setData(await res.json());
       setError(null);
-    } catch {
-      if (!silent) setError("Impossible de charger les données. Vérifiez votre connexion.");
+    } catch (e) {
+      if (!silent) setError(`Erreur réseau : ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setLoading(false);
     }
