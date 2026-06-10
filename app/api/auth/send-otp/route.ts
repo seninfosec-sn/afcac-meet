@@ -61,7 +61,8 @@ export async function POST(req: NextRequest) {
       `,
     });
   } catch (err) {
-    console.error("[Gmail] Erreur envoi OTP:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[Resend] Erreur envoi OTP:", msg);
     if (!IS_DEV) {
       return NextResponse.json(
         { error: "Impossible d'envoyer le code. Vérifiez votre adresse email." },
