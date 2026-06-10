@@ -7,7 +7,7 @@ export const sql = neon(DB_URL);
 let schemaReady = false;
 async function ensureSchema() {
   if (schemaReady) return;
-  await sql`CREATE TABLE IF NOT EXISTS users (
+  await sql`CREATE TABLE IF NOT EXISTS afcac_users (
     id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, display_name TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
   await sql`CREATE TABLE IF NOT EXISTS meeting_invites (
@@ -32,7 +32,7 @@ async function ensureSchema() {
 export async function upsertUser(email: string, name: string): Promise<string> {
   const id = email.replace(/[^a-z0-9]/gi, "_").toLowerCase();
   await sql`
-    INSERT INTO users (id, email, display_name)
+    INSERT INTO afcac_users (id, email, display_name)
     VALUES (${id}, ${email}, ${name})
     ON CONFLICT (email) DO UPDATE SET display_name = EXCLUDED.display_name
   `;
@@ -40,7 +40,7 @@ export async function upsertUser(email: string, name: string): Promise<string> {
 }
 
 export async function getUserByEmail(email: string) {
-  const rows = await sql`SELECT * FROM users WHERE email = ${email} LIMIT 1`;
+  const rows = await sql`SELECT * FROM afcac_users WHERE email = ${email} LIMIT 1`;
   return rows[0] ?? null;
 }
 
@@ -218,20 +218,20 @@ export async function getAllReservations(): Promise<Reservation[]> {
 }
 
 export async function getAllUsers(): Promise<{ id: string; email: string; display_name: string; created_at: string }[]> {
-  const rows = await sql`SELECT id, email, display_name, created_at FROM users ORDER BY created_at DESC`;
+  const rows = await sql`SELECT id, email, display_name, created_at FROM afcac_users ORDER BY created_at DESC`;
   return rows as { id: string; email: string; display_name: string; created_at: string }[];
 }
 
 export async function updateUserName(id: string, displayName: string): Promise<boolean> {
   const r = await sql`
-    UPDATE users SET display_name = ${displayName}, updated_at = NOW()
+    UPDATE afcac_users SET display_name = ${displayName}, updated_at = NOW()
     WHERE id = ${id} RETURNING id
   `;
   return r.length > 0;
 }
 
 export async function deleteUser(id: string): Promise<boolean> {
-  const r = await sql`DELETE FROM users WHERE id = ${id} RETURNING id`;
+  const r = await sql`DELETE FROM afcac_users WHERE id = ${id} RETURNING id`;
   return r.length > 0;
 }
 
