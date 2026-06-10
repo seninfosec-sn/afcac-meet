@@ -16,8 +16,14 @@ export async function GET() {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
 
-  const [reservations, users] = await Promise.all([getAllReservations(), getAllUsers()]);
-  return NextResponse.json({ reservations, users });
+  try {
+    const [reservations, users] = await Promise.all([getAllReservations(), getAllUsers()]);
+    return NextResponse.json({ reservations, users });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[Admin] Erreur GET reservations:", msg);
+    return NextResponse.json({ error: `Erreur base de données: ${msg}` }, { status: 500 });
+  }
 }
 
 export async function DELETE(req: NextRequest) {
