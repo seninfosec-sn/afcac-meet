@@ -49,20 +49,28 @@ export default function AdminPage() {
 
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
-    const res = await fetch("/api/admin/reservations");
-    if (!res.ok) {
-      const d = await res.json();
-      if (!silent) setError(d.error ?? "Erreur");
+    try {
+      const res = await fetch("/api/admin/reservations");
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        if (!silent) setError(d.error ?? "Accès refusé ou erreur serveur");
+        setLoading(false);
+        return;
+      }
+      setData(await res.json());
+      setError(null);
+    } catch {
+      if (!silent) setError("Impossible de charger les données. Vérifiez votre connexion.");
+    } finally {
       setLoading(false);
-      return;
     }
-    setData(await res.json());
-    setLoading(false);
   }, []);
 
   const fetchRooms = useCallback(async () => {
-    const res = await fetch("/api/admin/rooms");
-    if (res.ok) setRooms((await res.json()).rooms ?? []);
+    try {
+      const res = await fetch("/api/admin/rooms");
+      if (res.ok) setRooms((await res.json()).rooms ?? []);
+    } catch { /* silent */ }
   }, []);
 
   useEffect(() => { fetchData(); fetchRooms(); }, [fetchData, fetchRooms]);
