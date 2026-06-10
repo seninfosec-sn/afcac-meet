@@ -4,6 +4,29 @@ import { Reservation, ROOMS } from "./data";
 const DB_URL = process.env.DATABASE_URL!;
 export const sql = neon(DB_URL);
 
+let schemaReady = false;
+async function ensureSchema() {
+  if (schemaReady) return;
+  await sql`CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY, email TEXT UNIQUE NOT NULL, display_name TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
+  await sql`CREATE TABLE IF NOT EXISTS meeting_invites (
+    id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+    status TEXT NOT NULL DEFAULT 'pending', initiator JSONB NOT NULL, invitee JSONB,
+    slot_start_at TIMESTAMPTZ NOT NULL, slot_end_at TIMESTAMPTZ NOT NULL,
+    slot_timezone TEXT NOT NULL DEFAULT 'Africa/Dakar', location JSONB,
+    chat_thread_id TEXT, proposed_slot JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
+  await sql`CREATE TABLE IF NOT EXISTS room_reservations (
+    id TEXT PRIMARY KEY, title TEXT NOT NULL, description TEXT,
+    status TEXT NOT NULL DEFAULT 'pending', organizer JSONB NOT NULL,
+    attendees JSONB DEFAULT '[]', room_ref JSONB,
+    slot_start_at TIMESTAMPTZ NOT NULL, slot_end_at TIMESTAMPTZ NOT NULL,
+    slot_timezone TEXT NOT NULL DEFAULT 'Africa/Dakar', chat_thread_id TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW())`;
+  schemaReady = true;
+}
+
 // ── Users ────────────────────────────────────────────────────────
 
 export async function upsertUser(email: string, name: string): Promise<string> {
@@ -75,6 +98,7 @@ function roomResToReservation(row: Record<string, unknown>): Reservation {
 // ── Queries ──────────────────────────────────────────────────────
 
 export async function getReservationsForUser(email: string): Promise<Reservation[]> {
+  await ensureSchema();
   const [meetings, rooms] = await Promise.all([
     sql`
       SELECT * FROM meeting_invites
@@ -182,6 +206,7 @@ export async function updateRoomResStatus(id: string, status: string): Promise<b
 }
 
 export async function getAllReservations(): Promise<Reservation[]> {
+  await ensureSchema();
   const [meetings, rooms] = await Promise.all([
     sql`SELECT * FROM meeting_invites ORDER BY slot_start_at DESC`,
     sql`SELECT * FROM room_reservations ORDER BY slot_start_at DESC`,
