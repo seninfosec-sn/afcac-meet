@@ -52,8 +52,9 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/admin/reservations");
       if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        if (!silent) setError(d.error ?? "Accès refusé ou erreur serveur");
+        const text = await res.text().catch(() => "");
+        let msg = ""; try { msg = JSON.parse(text).error ?? ""; } catch { msg = text.slice(0, 200); }
+        if (!silent) setError(`[${res.status}] ${msg || "Erreur inconnue"}`);
         setLoading(false);
         return;
       }
