@@ -11,7 +11,7 @@ import {
 } from "@/lib/db";
 
 const EXPO_DATES = new Set(["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"]);
-const MAX_SLOTS_PER_DAY = 13;
+const MAX_SLOTS_PER_DAY = 32;
 
 function parseMinutes(t: string): number {
   const [h, m] = t.split(":").map(Number);

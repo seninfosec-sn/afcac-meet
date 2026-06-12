@@ -20,8 +20,8 @@ interface RoomData {
 type ReservationType = "bilateral" | "salle";
 
 const SLOT_DURATION = 45;
-const SLOTS = Array.from({ length: 13 }, (_, i) => {
-  const totalMin = 8 * 60 + i * SLOT_DURATION;
+const SLOTS = Array.from({ length: 32 }, (_, i) => {
+  const totalMin = 0 * 60 + i * SLOT_DURATION;
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
@@ -289,7 +289,7 @@ export default function NouvellePage() {
 
                 {rooms.map(room => {
                   const slotBooked = bookedRooms[room.id];
-                  const dayFull = (roomDayCount[room.id] ?? 0) >= 13;
+                  const dayFull = (roomDayCount[room.id] ?? 0) >= 32;
                   const unavailable = slotBooked || dayFull || room.locked;
                   const active = selectedRoom === room.id;
                   return (

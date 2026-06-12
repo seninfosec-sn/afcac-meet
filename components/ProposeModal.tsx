@@ -5,8 +5,8 @@ import { Reservation } from "@/lib/data";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const SLOT_DURATION = 45;
-const SLOTS = Array.from({ length: 13 }, (_, i) => {
-  const total = 8 * 60 + i * SLOT_DURATION;
+const SLOTS = Array.from({ length: 32 }, (_, i) => {
+  const total = 0 * 60 + i * SLOT_DURATION;
   const h = Math.floor(total / 60);
   const m = total % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
