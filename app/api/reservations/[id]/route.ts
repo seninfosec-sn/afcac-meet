@@ -45,15 +45,15 @@ async function sendConfirmationEmail(to: string, opts: {
   const statusColor  = isConfirmed ? "#145847" : isCancelled ? "#dc2626" : "#d97706";
   const statusBadge  = isConfirmed ? "Reunion confirmee" : isCancelled ? "Invitation refusee" : "Nouveau creneau propose";
   const statusMsgTxt = isConfirmed
-    ? `${opts.userName} a accepte votre invitation.`
+    ? `Votre demande de rencontre a ete confirmee par AFCAC.`
     : isCancelled
-    ? `${opts.userName} a refuse votre invitation.`
-    : `${opts.userName} propose un nouveau creneau.`;
+    ? `Votre demande de rencontre a ete refusee.`
+    : `Un nouveau creneau a ete propose pour votre rencontre.`;
   const statusMsg    = isConfirmed
-    ? `<strong>${opts.userName}</strong> a <strong>accepte</strong> votre invitation.`
+    ? `Votre demande de rencontre a été <strong>confirmée par AFCAC</strong>.`
     : isCancelled
-    ? `<strong>${opts.userName}</strong> a <strong>refuse</strong> votre invitation.`
-    : `<strong>${opts.userName}</strong> propose un <strong>nouveau creneau</strong>.`;
+    ? `Votre demande de rencontre a été <strong>refusée</strong>.`
+    : `Un <strong>nouveau créneau</strong> a été proposé pour votre rencontre.`;
 
   const slotTxt = isProposed && opts.proposedDate
     ? `Nouveau creneau : ${opts.proposedDate} de ${opts.proposedStartTime} a ${opts.proposedEndTime}`
@@ -153,7 +153,11 @@ export async function PATCH(
       const title     = meeting.title as string;
 
       const isInitiator = user.email.toLowerCase() === initiator.email.toLowerCase();
-      const otherEmail  = isInitiator ? invitee?.email : initiator.email;
+      // On confirmation, always notify the requester (invitee.email = senderEmail stored at creation).
+      // On cancel/propose, notify the other party as before.
+      const otherEmail = status === "confirmed"
+        ? invitee?.email
+        : isInitiator ? invitee?.email : initiator.email;
       const userName    = user.name || user.email;
       const slotStart   = meeting.slot_start_at as string;
       const slotEnd     = meeting.slot_end_at as string;

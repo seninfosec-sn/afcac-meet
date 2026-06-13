@@ -1,86 +1,93 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sendMail, FROM, REPLY_TO } from "@/lib/mailer";
+import { sendMail, FROM } from "@/lib/mailer";
+
+const SFALL = "sfall@afcac.org";
 
 export async function POST(req: NextRequest) {
-  const { to, date, time, location, message, senderName, senderEmail } = await req.json();
+  const { date, time, location, message, senderEmail, contactLabel, meetingTitle } = await req.json();
 
-  if (!to || !date || !time || !location) {
+  if (!date || !time) {
     return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://afcac-meet-main.vercel.app";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meet.afcac.org";
 
   const textBody = [
-    senderName ? `${senderName} vous invite à une rencontre bilatérale.` : "Vous avez reçu une invitation à une rencontre bilatérale.",
+    `Nouvelle demande de rencontre bilatérale reçue via la plateforme AFCAC EXPO 2026.`,
     "",
-    `Date     : ${date}`,
-    `Heure    : ${time}`,
-    `Lieu     : ${location}`,
-    message ? `\nMessage  : ${message}` : "",
-    senderEmail ? `\nContact  : ${senderEmail}` : "",
+    `Demandeur    : ${senderEmail || "—"}`,
+    `Avec         : ${contactLabel || meetingTitle || "—"}`,
+    `Date         : ${date}`,
+    `Heure        : ${time}`,
+    `Salle        : ${location || "—"}`,
+    message ? `\nMessage      : ${message}` : "",
     "",
-    `Consultez vos réservations : ${appUrl}/reservations`,
+    `Accéder à l'administration : ${appUrl}/admin`,
     "",
     "---",
     "AFCAC Official Bilateral Meetings Platform — AFCAC EXPO 2026",
-    "Si vous n'etes pas concerne par cet email, ignorez-le.",
-  ].filter(l => l !== undefined).join("\n");
+  ].filter(Boolean).join("\n");
 
   try {
     await sendMail({
       from: FROM,
-      to,
-      cc: ["sfall@afcac.org"],
-      replyTo: senderEmail || REPLY_TO,
-      subject: `Invitation a une rencontre bilaterale - ${date} a ${time}`,
+      to: SFALL,
+      replyTo: senderEmail || SFALL,
+      subject: `[DEMANDE RENCONTRE] ${meetingTitle || contactLabel || "Nouvelle demande"} — ${date} ${time}`,
       text: textBody,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+        <div style="font-family: Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
           <div style="background: #145847; padding: 24px 32px; border-radius: 10px 10px 0 0; text-align: center;">
             <img src="${appUrl}/afcac_logo.png" alt="AFCAC" style="height: 64px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto;" />
-            <p style="color: #a7d4c6; margin: 8px 0 0; font-size: 13px;">Invitation a une rencontre bilaterale</p>
+            <p style="color: #a7d4c6; margin: 8px 0 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;">Nouvelle demande de rencontre bilatérale</p>
           </div>
           <div style="background: white; padding: 32px; border-radius: 0 0 10px 10px; border: 1px solid #e5e7eb; border-top: none;">
             <p style="color: #374151; font-size: 15px; margin: 0 0 24px;">
-              ${senderName ? `<strong>${senderName}</strong> vous invite a une rencontre bilaterale.` : "Vous avez recu une invitation a une rencontre bilaterale."}
+              Une nouvelle demande de rencontre bilatérale a été soumise via la plateforme. Veuillez la traiter et confirmer la rencontre.
             </p>
 
             <div style="background: #f3faf7; border: 1px solid #d1e9e2; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px; width: 110px;">Date</td>
-                  <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${date}</td>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px; width: 130px; vertical-align: top;">Demandeur</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">
+                    <a href="mailto:${senderEmail}" style="color: #145847;">${senderEmail || "—"}</a>
+                  </td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Heure</td>
-                  <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${time}</td>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px; vertical-align: top;">Souhaite rencontrer</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">${contactLabel || meetingTitle || "—"}</td>
                 </tr>
                 <tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Lieu</td>
-                  <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${location}</td>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">Date</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">${date}</td>
                 </tr>
-                ${senderEmail ? `<tr>
-                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Contact</td>
-                  <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;"><a href="mailto:${senderEmail}" style="color:#145847;">${senderEmail}</a></td>
+                <tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">Heure</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">${time}</td>
+                </tr>
+                ${location ? `<tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">Salle</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">${location}</td>
                 </tr>` : ""}
               </table>
             </div>
 
             ${message ? `
             <div style="border-left: 3px solid #145847; padding-left: 16px; margin-bottom: 24px;">
-              <p style="color: #6b7280; font-size: 12px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.05em;">Message</p>
+              <p style="color: #6b7280; font-size: 12px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 0.05em;">Message du demandeur</p>
               <p style="color: #374151; font-size: 14px; margin: 0; white-space: pre-wrap;">${message}</p>
             </div>
             ` : ""}
 
-            <a href="${appUrl}/reservations"
+            <a href="${appUrl}/admin"
                style="display: inline-block; background: #145847; color: white; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-size: 14px; font-weight: 600;">
-              Voir la reservation
+              Gérer dans l'administration →
             </a>
 
             <p style="color: #9ca3af; font-size: 12px; margin-top: 32px; padding-top: 20px; border-top: 1px solid #f3f4f6;">
               AFCAC Official Bilateral Meetings Platform — AFCAC EXPO 2026<br>
-              Si vous n'etes pas concerne par cet email, ignorez-le.
+              Une fois confirmée, le demandeur recevra automatiquement un email de confirmation.
             </p>
           </div>
         </div>
@@ -88,7 +95,7 @@ export async function POST(req: NextRequest) {
     });
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Erreur inconnue";
-    console.error("[Gmail] Erreur envoi invitation:", msg);
+    console.error("[send-invitation] Erreur envoi:", msg);
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 

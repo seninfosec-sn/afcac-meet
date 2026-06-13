@@ -138,15 +138,17 @@ export default function NouvellePage() {
     const roomName = rooms.find(r => r.id === selectedRoom)?.name ?? "";
     const room = rooms.find(r => r.id === selectedRoom);
 
-    let inviteeEmail: string | undefined;
+    let contactLabel = "";
     let meetingTitle: string;
     if (type === "bilateral") {
       if (contactType === "partner" && selectedPartner) {
-        inviteeEmail = selectedPartner.email;
+        contactLabel = `${selectedPartner.organization} (${selectedPartner.email})`;
         meetingTitle = `${t.newRes.meetingWith} ${selectedPartner.name} — ${selectedPartner.organization}`;
       } else if (contactType === "country" && selectedCountry) {
+        contactLabel = `${selectedCountry.flag} ${getCountryName(selectedCountry, lang)}`;
         meetingTitle = `${t.newRes.meetingWith} ${selectedCountry.flag} ${getCountryName(selectedCountry, lang)}`;
       } else {
+        contactLabel = otherText.trim();
         meetingTitle = otherText.trim();
       }
     } else {
@@ -163,7 +165,8 @@ export default function NouvellePage() {
         endTime,
         title: meetingTitle,
         description: message,
-        inviteeEmail: type === "bilateral" ? inviteeEmail : undefined,
+        // senderEmail stored as inviteeEmail — used to send confirmation when sfall confirms
+        inviteeEmail: type === "bilateral" ? senderEmail : undefined,
         room: selectedRoom || undefined,
         location: roomName,
         capacity: room?.capacity,
@@ -182,11 +185,11 @@ export default function NouvellePage() {
       return;
     }
 
-    if (type === "bilateral" && inviteeEmail) {
+    if (type === "bilateral" && senderEmail) {
       const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: inviteeEmail, date, time, location: roomName, message, senderName: "AFCAC — sfall@afcac.org", senderEmail }),
+        body: JSON.stringify({ date, time, location: roomName, message, senderEmail, contactLabel, meetingTitle }),
       }).catch(() => null);
 
       if (!mailRes || !mailRes.ok) {
@@ -204,7 +207,7 @@ export default function NouvellePage() {
     refresh();
     toast.success(
       type === "bilateral" ? t.newRes.successInvite : t.newRes.successRoom,
-      { description: type === "bilateral" ? `${t.newRes.emailSentTo} ${inviteeEmail}.` : t.newRes.resSaved }
+      { description: type === "bilateral" ? t.newRes.resSaved : t.newRes.resSaved }
     );
     setSubmitted(true);
     setTimeout(() => router.push("/reservations"), 2000);
