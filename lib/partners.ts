@@ -222,8 +222,6 @@ export const COUNTRIES: Country[] = [
   { code: "TO", nameEn: "Tonga",                          nameFr: "Tonga",                          namePt: "Tonga",                          flag: "🇹🇴" },
   { code: "TV", nameEn: "Tuvalu",                         nameFr: "Tuvalu",                         namePt: "Tuvalu",                         flag: "🇹🇻" },
   { code: "VU", nameEn: "Vanuatu",                        nameFr: "Vanuatu",                        namePt: "Vanuatu",                        flag: "🇻🇺" },
-  // ── Organisations internationales ────────────────────────────────────────
-  { code: "INT", nameEn: "International Organization",   nameFr: "Organisation internationale",    namePt: "Organização Internacional",      flag: "🌐" },
 ];
 
 // Partenaires — à compléter avec les vrais contacts et emails
