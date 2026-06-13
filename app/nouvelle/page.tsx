@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { COUNTRIES, PARTNERS, getPartnersForCountry, getCountryName } from "@/lib/partners";
+import { COUNTRIES, PARTNERS, getCountryName } from "@/lib/partners";
 
 interface RoomData {
   id: string;
@@ -79,7 +79,6 @@ export default function NouvellePage() {
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
 
-  const countryPartners = useMemo(() => getPartnersForCountry(countryCode), [countryCode]);
   const selectedPartner = useMemo(() => PARTNERS.find(p => p.id === partnerId), [partnerId]);
 
   const endTime = addMinutes(time, SLOT_DURATION);
@@ -362,7 +361,7 @@ export default function NouvellePage() {
                     <select
                       required
                       value={countryCode}
-                      onChange={e => { setCountryCode(e.target.value); setPartnerId(""); }}
+                      onChange={e => setCountryCode(e.target.value)}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
                     >
                       <option value="">— {lang === "EN" ? "Select a country" : lang === "PT" ? "Selecionar um país" : "Sélectionner un pays"} —</option>
@@ -378,18 +377,11 @@ export default function NouvellePage() {
                       required
                       value={partnerId}
                       onChange={e => setPartnerId(e.target.value)}
-                      disabled={!countryCode || countryPartners.length === 0}
-                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
                     >
-                      <option value="">
-                        {!countryCode
-                          ? "— Choisir un pays d'abord —"
-                          : countryPartners.length === 0
-                          ? "— Aucun partenaire enregistré —"
-                          : "— Sélectionner un partenaire —"}
-                      </option>
-                      {countryPartners.map(p => (
-                        <option key={p.id} value={p.id}>{p.organization} · {p.name}</option>
+                      <option value="">— {lang === "EN" ? "Select a partner" : lang === "PT" ? "Selecionar um parceiro" : "Sélectionner un partenaire"} —</option>
+                      {PARTNERS.map(p => (
+                        <option key={p.id} value={p.id}>{p.organization}</option>
                       ))}
                     </select>
                   </div>
