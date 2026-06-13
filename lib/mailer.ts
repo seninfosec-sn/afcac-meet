@@ -3,7 +3,7 @@ import { Resend } from "resend";
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const FROM     = "AFCAC Bilateral Meetings <noreply@afcac.org>";
-export const REPLY_TO = "afcacexpo@gmail.com";
+export const REPLY_TO = "sfall@afcac.org";
 
 export async function sendMail(opts: {
   from?: string;

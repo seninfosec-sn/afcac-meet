@@ -7,6 +7,7 @@ import { useStore } from "@/lib/store";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { COUNTRIES, PARTNERS, getPartnersForCountry } from "@/lib/partners";
 
 interface RoomData {
   id: string;
@@ -73,9 +74,13 @@ export default function NouvellePage() {
   const [time, setTime] = useState("08:00");
   const [selectedRoom, setSelectedRoom] = useState("visio");
 
-  const [email, setEmail] = useState("");
+  const [countryCode, setCountryCode] = useState("");
+  const [partnerId, setPartnerId] = useState("");
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
+
+  const countryPartners = useMemo(() => getPartnersForCountry(countryCode), [countryCode]);
+  const selectedPartner = useMemo(() => PARTNERS.find(p => p.id === partnerId), [partnerId]);
 
   const endTime = addMinutes(time, SLOT_DURATION);
 
@@ -108,8 +113,13 @@ export default function NouvellePage() {
     e.preventDefault();
     setError(null);
 
-    if (selectedRoom !== "visio" && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 13)) {
-      setError((roomDayCount[selectedRoom] ?? 0) >= 13
+    if (type === "bilateral" && !selectedPartner) {
+      setError("Veuillez sélectionner un pays et un partenaire.");
+      return;
+    }
+
+    if (selectedRoom !== "visio" && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 32)) {
+      setError((roomDayCount[selectedRoom] ?? 0) >= 32
         ? t.newRes.errorMaxSlots
         : t.newRes.errorSlotTaken);
       return;
@@ -119,6 +129,8 @@ export default function NouvellePage() {
 
     const roomName = selectedRoom === "visio" ? "Visio" : rooms.find(r => r.id === selectedRoom)?.name ?? "";
     const room = rooms.find(r => r.id === selectedRoom);
+    const inviteeEmail = selectedPartner?.email;
+    const inviteeLabel = selectedPartner ? `${selectedPartner.name} — ${selectedPartner.organization}` : "";
 
     const res = await fetch("/api/reservations", {
       method: "POST",
@@ -128,9 +140,9 @@ export default function NouvellePage() {
         date,
         startTime: time,
         endTime,
-        title: type === "bilateral" ? `Rencontre avec ${email}` : (subject || `${roomName} — Réservation`),
+        title: type === "bilateral" ? `Rencontre avec ${inviteeLabel}` : (subject || `${roomName} — Réservation`),
         description: message,
-        inviteeEmail: type === "bilateral" ? email : undefined,
+        inviteeEmail: type === "bilateral" ? inviteeEmail : undefined,
         room: selectedRoom === "visio" ? undefined : selectedRoom,
         location: roomName,
         capacity: room?.capacity,
@@ -149,11 +161,11 @@ export default function NouvellePage() {
       return;
     }
 
-    if (type === "bilateral") {
+    if (type === "bilateral" && inviteeEmail) {
       const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: email, date, time, location: roomName, message }),
+        body: JSON.stringify({ to: inviteeEmail, date, time, location: roomName, message, senderName: "AFCAC — sfall@afcac.org" }),
       }).catch(() => null);
 
       if (!mailRes || !mailRes.ok) {
@@ -171,7 +183,7 @@ export default function NouvellePage() {
     refresh();
     toast.success(
       type === "bilateral" ? t.newRes.successInvite : t.newRes.successRoom,
-      { description: type === "bilateral" ? `${t.newRes.emailSentTo} ${email}.` : t.newRes.resSaved }
+      { description: type === "bilateral" ? `${t.newRes.emailSentTo} ${inviteeEmail}.` : t.newRes.resSaved }
     );
     setSubmitted(true);
     setTimeout(() => router.push("/reservations"), 2000);
@@ -342,12 +354,54 @@ export default function NouvellePage() {
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
                   </div>
                 )}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">{t.newRes.invite}</label>
-                  <input type="email" placeholder={t.newRes.invitePlaceholder} required
-                    value={email} onChange={e => setEmail(e.target.value)}
-                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+
+                {/* Pays + Partenaire */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">Pays</label>
+                    <select
+                      required
+                      value={countryCode}
+                      onChange={e => { setCountryCode(e.target.value); setPartnerId(""); }}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
+                    >
+                      <option value="">— Sélectionner un pays —</option>
+                      {COUNTRIES.map(c => (
+                        <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">Partenaire</label>
+                    <select
+                      required
+                      value={partnerId}
+                      onChange={e => setPartnerId(e.target.value)}
+                      disabled={!countryCode || countryPartners.length === 0}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {!countryCode
+                          ? "— Choisir un pays d'abord —"
+                          : countryPartners.length === 0
+                          ? "— Aucun partenaire enregistré —"
+                          : "— Sélectionner un partenaire —"}
+                      </option>
+                      {countryPartners.map(p => (
+                        <option key={p.id} value={p.id}>{p.organization} · {p.name}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
+                {selectedPartner && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-light border border-brand/20 text-xs text-brand">
+                    <span className="font-semibold">{COUNTRIES.find(c => c.code === selectedPartner.countryCode)?.flag}</span>
+                    <span>Invitation envoyée à <strong>{selectedPartner.email}</strong></span>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{t.newRes.inviteMessage}</label>
                   <textarea placeholder={t.newRes.inviteMsgPlaceholder} rows={3}
