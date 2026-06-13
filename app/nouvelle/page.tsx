@@ -7,7 +7,7 @@ import { useStore } from "@/lib/store";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { COUNTRIES, PARTNERS, getPartnersForCountry } from "@/lib/partners";
+import { COUNTRIES, PARTNERS, getPartnersForCountry, getCountryName } from "@/lib/partners";
 
 interface RoomData {
   id: string;
@@ -62,7 +62,7 @@ function isRoomConflict(
 export default function NouvellePage() {
   const router = useRouter();
   const { reservations, refresh } = useStore();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
 
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [type, setType] = useState<ReservationType>("bilateral");
@@ -365,9 +365,9 @@ export default function NouvellePage() {
                       onChange={e => { setCountryCode(e.target.value); setPartnerId(""); }}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
                     >
-                      <option value="">— Sélectionner un pays —</option>
-                      {COUNTRIES.map(c => (
-                        <option key={c.code} value={c.code}>{c.flag} {c.name}</option>
+                      <option value="">— {lang === "EN" ? "Select a country" : lang === "PT" ? "Selecionar um país" : "Sélectionner un pays"} —</option>
+                      {[...COUNTRIES].sort((a, b) => getCountryName(a, lang).localeCompare(getCountryName(b, lang))).map(c => (
+                        <option key={c.code} value={c.code}>{c.flag} {getCountryName(c, lang)}</option>
                       ))}
                     </select>
                   </div>
