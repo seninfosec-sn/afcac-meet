@@ -22,8 +22,8 @@ function isValidSlot(startTime: string, endTime: string): boolean {
   const start = parseMinutes(startTime);
   const end   = parseMinutes(endTime);
   if (end - start !== 45) return false;
-  if (start < 8 * 60 || start > 17 * 60) return false;
-  if ((start - 8 * 60) % 45 !== 0) return false;
+  if (start < 0 || start > 23 * 60) return false;
+  if (start % 45 !== 0) return false;
   return true;
 }
 
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Les réservations sont uniquement autorisées du 15 au 19 juin 2026." }, { status: 400 });
     }
     if (!isValidSlot(startTime, endTime)) {
-      return NextResponse.json({ error: "Créneau invalide. Les réservations sont de 45 min, de 08h00 à 17h45." }, { status: 400 });
+      return NextResponse.json({ error: "Créneau invalide. Les créneaux sont de 45 min (00:00–23:45)." }, { status: 400 });
     }
 
     const slotStart = `${date}T${startTime}:00Z`;
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Email de l'invité requis" }, { status: 400 });
       }
 
-      if (room && room !== "visio") {
+      if (room) {
         if (await isRoomLocked(room))
           return NextResponse.json({ error: "Cette salle est verrouillée par l'administrateur." }, { status: 403 });
         const conflict = await hasRoomConflict(room, slotStart, slotEnd);
