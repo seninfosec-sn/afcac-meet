@@ -6,6 +6,7 @@ import ReservationCard from "@/components/ReservationCard";
 import ReservationDetailModal from "@/components/ReservationDetailModal";
 import QRModal from "@/components/QRModal";
 import ProposeModal from "@/components/ProposeModal";
+import SponsorsSlider from "@/components/SponsorsSlider";
 import { useStore } from "@/lib/store";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -193,6 +194,8 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      <SponsorsSlider />
 
       {detailReservation && (
         <ReservationDetailModal
