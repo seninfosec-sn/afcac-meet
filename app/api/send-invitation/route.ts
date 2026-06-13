@@ -4,7 +4,7 @@ import { sendMail, FROM } from "@/lib/mailer";
 const SFALL = "sfall@afcac.org";
 
 export async function POST(req: NextRequest) {
-  const { date, time, location, message, senderEmail, contactLabel, meetingTitle } = await req.json();
+  const { date, time, location, message, senderEmail, contactLabel, meetingTitle, firstName, lastName, jobTitle, requesterCountry, organization } = await req.json();
 
   if (!date || !time) {
     return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
@@ -12,10 +12,17 @@ export async function POST(req: NextRequest) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://meet.afcac.org";
 
+  const fullName = [firstName, lastName].filter(Boolean).join(" ") || senderEmail || "—";
+
   const textBody = [
     `Nouvelle demande de rencontre bilatérale reçue via la plateforme AFCAC EXPO 2026.`,
     "",
-    `Demandeur    : ${senderEmail || "—"}`,
+    `Nom          : ${fullName}`,
+    jobTitle        ? `Titre        : ${jobTitle}` : "",
+    requesterCountry ? `Pays         : ${requesterCountry}` : "",
+    organization    ? `Organisation : ${organization}` : "",
+    `Email        : ${senderEmail || "—"}`,
+    "",
     `Avec         : ${contactLabel || meetingTitle || "—"}`,
     `Date         : ${date}`,
     `Heure        : ${time}`,
@@ -49,11 +56,28 @@ export async function POST(req: NextRequest) {
             <div style="background: #f3faf7; border: 1px solid #d1e9e2; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px; width: 130px; vertical-align: top;">Demandeur</td>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px; width: 130px; vertical-align: top;">Nom</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">${fullName}</td>
+                </tr>
+                ${jobTitle ? `<tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">Titre</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px;">${jobTitle}</td>
+                </tr>` : ""}
+                ${requesterCountry ? `<tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">Pays</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px;">${requesterCountry}</td>
+                </tr>` : ""}
+                ${organization ? `<tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">Organisation</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px;">${organization}</td>
+                </tr>` : ""}
+                <tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px; vertical-align: top;">Email</td>
                   <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">
                     <a href="mailto:${senderEmail}" style="color: #145847;">${senderEmail || "—"}</a>
                   </td>
                 </tr>
+                <tr><td colspan="2" style="padding: 10px 0 2px; border-top: 1px solid #e5e7eb;"></td></tr>
                 <tr>
                   <td style="padding: 7px 0; color: #6b7280; font-size: 13px; vertical-align: top;">Souhaite rencontrer</td>
                   <td style="padding: 7px 0; color: #111827; font-size: 14px; font-weight: 600;">${contactLabel || meetingTitle || "—"}</td>

@@ -75,6 +75,11 @@ export default function NouvellePage() {
   const [time, setTime] = useState("08:15");
   const [selectedRoom, setSelectedRoom] = useState("");
 
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [requesterCountry, setRequesterCountry] = useState("");
+  const [organization, setOrganization] = useState("");
   const [contactType, setContactType] = useState<ContactType>("");
   const [countryCode, setCountryCode] = useState("");
   const [partnerId, setPartnerId] = useState("");
@@ -189,7 +194,7 @@ export default function NouvellePage() {
       const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, time, location: roomName, message, senderEmail, contactLabel, meetingTitle }),
+        body: JSON.stringify({ date, time, location: roomName, message, senderEmail, contactLabel, meetingTitle, firstName, lastName, jobTitle, requesterCountry, organization }),
       }).catch(() => null);
 
       if (!mailRes || !mailRes.ok) {
@@ -245,7 +250,7 @@ export default function NouvellePage() {
             ] as const).map(([rtype, Icon, label, desc]) => (
               <button
                 key={rtype}
-                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); setContactType(""); setCountryCode(""); setPartnerId(""); setOtherText(""); }}
+                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); setContactType(""); setCountryCode(""); setPartnerId(""); setOtherText(""); setFirstName(""); setLastName(""); setJobTitle(""); setRequesterCountry(""); setOrganization(""); setSenderEmail(""); }}
                 className={cn(
                   "flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left",
                   type === rtype ? "border-brand bg-brand-light" : "border-border bg-card hover:border-brand/30"
@@ -428,6 +433,39 @@ export default function NouvellePage() {
                     />
                   </div>
                 )}
+
+                {/* Informations du demandeur */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t.newRes.firstName} <span className="text-red-500">*</span></label>
+                    <input type="text" required value={firstName} onChange={e => setFirstName(e.target.value)}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t.newRes.lastName} <span className="text-red-500">*</span></label>
+                    <input type="text" required value={lastName} onChange={e => setLastName(e.target.value)}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t.newRes.jobTitle} <span className="text-red-500">*</span></label>
+                    <input type="text" required value={jobTitle} onChange={e => setJobTitle(e.target.value)}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t.newRes.requesterCountry} <span className="text-red-500">*</span></label>
+                    <input type="text" required value={requesterCountry} onChange={e => setRequesterCountry(e.target.value)}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">{t.newRes.organization} <span className="text-red-500">*</span></label>
+                  <input type="text" required value={organization} onChange={e => setOrganization(e.target.value)}
+                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">
