@@ -19,6 +19,7 @@ interface RoomData {
 }
 
 type ReservationType = "bilateral" | "salle";
+type ContactType = "" | "country" | "partner" | "other";
 
 const SLOT_DURATION = 45;
 const SLOTS = Array.from({ length: 32 }, (_, i) => {
@@ -74,12 +75,15 @@ export default function NouvellePage() {
   const [time, setTime] = useState("08:00");
   const [selectedRoom, setSelectedRoom] = useState("");
 
+  const [contactType, setContactType] = useState<ContactType>("");
   const [countryCode, setCountryCode] = useState("");
   const [partnerId, setPartnerId] = useState("");
+  const [otherText, setOtherText] = useState("");
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
 
   const selectedPartner = useMemo(() => PARTNERS.find(p => p.id === partnerId), [partnerId]);
+  const selectedCountry = useMemo(() => COUNTRIES.find(c => c.code === countryCode), [countryCode]);
 
   const endTime = addMinutes(time, SLOT_DURATION);
 
@@ -112,9 +116,13 @@ export default function NouvellePage() {
     e.preventDefault();
     setError(null);
 
-    if (type === "bilateral" && !selectedPartner) {
-      setError(t.newRes.errorSelectPartner);
-      return;
+    if (type === "bilateral") {
+      const invalid =
+        !contactType ||
+        (contactType === "country" && !countryCode) ||
+        (contactType === "partner" && !selectedPartner) ||
+        (contactType === "other" && !otherText.trim());
+      if (invalid) { setError(t.newRes.errorSelectContact); return; }
     }
 
     if (selectedRoom && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 32)) {
@@ -128,8 +136,21 @@ export default function NouvellePage() {
 
     const roomName = rooms.find(r => r.id === selectedRoom)?.name ?? "";
     const room = rooms.find(r => r.id === selectedRoom);
-    const inviteeEmail = selectedPartner?.email;
-    const inviteeLabel = selectedPartner ? `${selectedPartner.name} — ${selectedPartner.organization}` : "";
+
+    let inviteeEmail: string | undefined;
+    let meetingTitle: string;
+    if (type === "bilateral") {
+      if (contactType === "partner" && selectedPartner) {
+        inviteeEmail = selectedPartner.email;
+        meetingTitle = `${t.newRes.meetingWith} ${selectedPartner.name} — ${selectedPartner.organization}`;
+      } else if (contactType === "country" && selectedCountry) {
+        meetingTitle = `${t.newRes.meetingWith} ${selectedCountry.flag} ${getCountryName(selectedCountry, lang)}`;
+      } else {
+        meetingTitle = otherText.trim();
+      }
+    } else {
+      meetingTitle = subject || `${roomName} — ${t.newRes.roomReservation}`;
+    }
 
     const res = await fetch("/api/reservations", {
       method: "POST",
@@ -139,7 +160,7 @@ export default function NouvellePage() {
         date,
         startTime: time,
         endTime,
-        title: type === "bilateral" ? `${t.newRes.meetingWith} ${inviteeLabel}` : (subject || `${roomName} — ${t.newRes.roomReservation}`),
+        title: meetingTitle,
         description: message,
         inviteeEmail: type === "bilateral" ? inviteeEmail : undefined,
         room: selectedRoom || undefined,
@@ -220,7 +241,7 @@ export default function NouvellePage() {
             ] as const).map(([rtype, Icon, label, desc]) => (
               <button
                 key={rtype}
-                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); }}
+                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); setContactType(""); setCountryCode(""); setPartnerId(""); setOtherText(""); }}
                 className={cn(
                   "flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left",
                   type === rtype ? "border-brand bg-brand-light" : "border-border bg-card hover:border-brand/30"
@@ -332,12 +353,31 @@ export default function NouvellePage() {
 
             {type === "bilateral" && (
               <>
-                {/* Pays + Partenaire */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                {/* Étape 1 — type de contact */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">{t.newRes.contactType}</label>
+                  <select
+                    value={contactType}
+                    onChange={e => {
+                      setContactType(e.target.value as ContactType);
+                      setCountryCode("");
+                      setPartnerId("");
+                      setOtherText("");
+                    }}
+                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
+                  >
+                    <option value="">— {t.newRes.selectContactType} —</option>
+                    <option value="country">{t.newRes.contactTypeCountry}</option>
+                    <option value="partner">{t.newRes.contactTypePartner}</option>
+                    <option value="other">{t.newRes.contactTypeOther}</option>
+                  </select>
+                </div>
+
+                {/* Étape 2 — champ conditionnel */}
+                {contactType === "country" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium">{t.newRes.country}</label>
                     <select
-                      required
                       value={countryCode}
                       onChange={e => setCountryCode(e.target.value)}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
@@ -348,11 +388,12 @@ export default function NouvellePage() {
                       ))}
                     </select>
                   </div>
+                )}
 
+                {contactType === "partner" && (
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium">{t.newRes.partner}</label>
                     <select
-                      required
                       value={partnerId}
                       onChange={e => setPartnerId(e.target.value)}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
@@ -362,13 +403,25 @@ export default function NouvellePage() {
                         <option key={p.id} value={p.id}>{p.organization}</option>
                       ))}
                     </select>
+                    {selectedPartner && (
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-light border border-brand/20 text-xs text-brand">
+                        <span className="font-semibold">{COUNTRIES.find(c => c.code === selectedPartner.countryCode)?.flag}</span>
+                        <span>{t.newRes.invitationSentTo} <strong>{selectedPartner.email}</strong></span>
+                      </div>
+                    )}
                   </div>
-                </div>
+                )}
 
-                {selectedPartner && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-light border border-brand/20 text-xs text-brand">
-                    <span className="font-semibold">{COUNTRIES.find(c => c.code === selectedPartner.countryCode)?.flag}</span>
-                    <span>{t.newRes.invitationSentTo} <strong>{selectedPartner.email}</strong></span>
+                {contactType === "other" && (
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t.newRes.otherLabel}</label>
+                    <textarea
+                      rows={3}
+                      placeholder={t.newRes.otherPlaceholder}
+                      value={otherText}
+                      onChange={e => setOtherText(e.target.value)}
+                      className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors resize-none"
+                    />
                   </div>
                 )}
 
