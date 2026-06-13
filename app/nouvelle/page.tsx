@@ -129,6 +129,7 @@ export default function NouvellePage() {
         (contactType === "partner" && !selectedPartner) ||
         (contactType === "other" && !otherText.trim());
       if (invalid) { setError(t.newRes.errorSelectContact); return; }
+      if (!message.trim()) { setError(t.newRes.inviteMessage + " " + (lang === "EN" ? "is required." : lang === "PT" ? "é obrigatório." : "est obligatoire.")); return; }
     }
 
     if (selectedRoom && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 32)) {
@@ -483,8 +484,8 @@ export default function NouvellePage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">{t.newRes.inviteMessage}</label>
-                  <textarea placeholder={t.newRes.inviteMsgPlaceholder} rows={3}
+                  <label className="text-sm font-medium">{t.newRes.inviteMessage} <span className="text-red-500">*</span></label>
+                  <textarea required placeholder={t.newRes.inviteMsgPlaceholder} rows={3}
                     value={message} onChange={e => setMessage(e.target.value)}
                     className="px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors resize-none" />
                 </div>
