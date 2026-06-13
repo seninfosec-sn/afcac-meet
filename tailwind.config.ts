@@ -71,16 +71,11 @@ const config: Config = {
           from: { opacity: "0" },
           to: { opacity: "1" },
         },
-        marquee: {
-          from: { transform: "translateX(0)" },
-          to: { transform: "translateX(-50%)" },
-        },
       },
       animation: {
         pulse: "pulse 1.5s ease-in-out infinite",
         "slide-up": "slide-up 0.3s ease-out",
         "fade-in": "fade-in 0.2s ease-out",
-        marquee: "marquee 30s linear infinite",
       },
     },
   },
