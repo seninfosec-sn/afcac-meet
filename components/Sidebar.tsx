@@ -7,7 +7,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Lang } from "@/lib/i18n";
 
-const ADMIN_EMAILS = ["afcacexpo@gmail.com"];
+const ADMIN_EMAILS = ["afcacexpo@gmail.com", "sfall@afcac.org"];
 const LANGS: Lang[] = ["EN", "FR", "PT"];
 
 interface SessionUser {

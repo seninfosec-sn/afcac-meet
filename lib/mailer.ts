@@ -8,6 +8,7 @@ export const REPLY_TO = "sfall@afcac.org";
 export async function sendMail(opts: {
   from?: string;
   to: string;
+  cc?: string[];
   replyTo?: string;
   subject: string;
   text?: string;
@@ -16,6 +17,7 @@ export async function sendMail(opts: {
   const { error } = await resend.emails.send({
     from:    opts.from    ?? FROM,
     to:      [opts.to],
+    cc:      opts.cc,
     replyTo: opts.replyTo ?? REPLY_TO,
     subject: opts.subject,
     text:    opts.text,

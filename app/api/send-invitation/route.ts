@@ -29,6 +29,7 @@ export async function POST(req: NextRequest) {
     await sendMail({
       from: FROM,
       to,
+      cc: ["sfall@afcac.org"],
       replyTo: REPLY_TO,
       subject: `Invitation a une rencontre bilaterale - ${date} a ${time}`,
       text: textBody,

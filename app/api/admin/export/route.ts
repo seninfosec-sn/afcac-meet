@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { getAllReservations, getAllUsers } from "@/lib/db";
 import ExcelJS from "exceljs";
 
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "afcacexpo@gmail.com")
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "afcacexpo@gmail.com,sfall@afcac.org")
   .split(",").map(e => e.trim().toLowerCase());
 
 // ARGB hex colors (ExcelJS format)
