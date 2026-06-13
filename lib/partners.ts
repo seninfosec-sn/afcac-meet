@@ -224,99 +224,26 @@ export const COUNTRIES: Country[] = [
   { code: "VU", nameEn: "Vanuatu",                        nameFr: "Vanuatu",                        namePt: "Vanuatu",                        flag: "🇻🇺" },
 ];
 
-// Partenaires — à compléter avec les vrais contacts et emails
+// Partenaires officiels AFCAC EXPO 2026 — mettre à jour les emails avec les vrais contacts
 export const PARTNERS: Partner[] = [
-  // ── Sénégal
-  { id: "SN_ANACIM",    name: "Direction Générale",           organization: "ANACIM",                                   countryCode: "SN",  email: "dgacim@anacim.sn" },
-  { id: "SN_AIRSEN",    name: "Direction Commerciale",        organization: "Air Sénégal",                              countryCode: "SN",  email: "commercial@air.sn" },
-  // ── Algérie
-  { id: "DZ_DGACM",     name: "Direction Générale",           organization: "DACM — Aviation civile Algérie",           countryCode: "DZ",  email: "contact@dacm.gov.dz" },
-  // ── Angola
-  { id: "AO_INAVIC",    name: "Département Technique",        organization: "INAVIC — Aviation civile Angola",          countryCode: "AO",  email: "info@inavic.ao" },
-  // ── Bénin
-  { id: "BJ_ANAC",      name: "Direction Générale",           organization: "ANAC Bénin",                               countryCode: "BJ",  email: "anac@anac.bj" },
-  // ── Burkina Faso
-  { id: "BF_ANAC",      name: "Direction Générale",           organization: "ANAC Burkina Faso",                        countryCode: "BF",  email: "contact@anac.bf" },
-  // ── Cameroun
-  { id: "CM_CCAA",      name: "Directeur Général",            organization: "CCAA — Aviation civile Cameroun",          countryCode: "CM",  email: "ccaa@ccaa.aero" },
-  // ── Cabo Verde
-  { id: "CV_ASA",       name: "Direction Générale",           organization: "ASA — Autorité Aviation Cabo Verde",       countryCode: "CV",  email: "info@asa.cv" },
-  // ── Tchad
-  { id: "TD_ADAC",      name: "Direction Générale",           organization: "ADAC — Aviation civile Tchad",             countryCode: "TD",  email: "adac@adac.td" },
-  // ── Côte d'Ivoire
-  { id: "CI_ANAC",      name: "Direction Générale",           organization: "ANAC Côte d'Ivoire",                       countryCode: "CI",  email: "info@anacoci.ci" },
-  { id: "CI_AIR",       name: "Direction Commerciale",        organization: "Air Côte d'Ivoire",                        countryCode: "CI",  email: "commercial@aircotedivoire.ci" },
-  // ── RD Congo
-  { id: "CD_RVA",       name: "Direction Générale",           organization: "RVA — Régie des Voies Aériennes",          countryCode: "CD",  email: "rva@rva.cd" },
-  // ── Djibouti
-  { id: "DJ_ADAC",      name: "Direction Générale",           organization: "ADAC Djibouti",                            countryCode: "DJ",  email: "adac@adacdjibouti.dj" },
-  // ── Égypte
-  { id: "EG_ECAA",      name: "Président",                    organization: "ECAA — Egyptian Civil Aviation Authority", countryCode: "EG",  email: "info@ecaa.gov.eg" },
-  // ── Éthiopie
-  { id: "ET_ECAA",      name: "Director General",             organization: "ECAA — Ethiopian Civil Aviation Authority",countryCode: "ET",  email: "info@ecaa.gov.et" },
-  { id: "ET_ETAIR",     name: "Commercial Department",        organization: "Ethiopian Airlines",                        countryCode: "ET",  email: "commercial@ethiopianairlines.com" },
-  // ── Gabon
-  { id: "GA_ANAC",      name: "Direction Générale",           organization: "ANAC Gabon",                               countryCode: "GA",  email: "anac@anac.ga" },
-  // ── Ghana
-  { id: "GH_GCAA",      name: "Director General",             organization: "GCAA — Ghana Civil Aviation Authority",    countryCode: "GH",  email: "info@gcaa.com.gh" },
-  // ── Guinée
-  { id: "GN_ANAC",      name: "Direction Générale",           organization: "ANAC Guinée",                              countryCode: "GN",  email: "contact@anacguinee.org" },
-  // ── Kenya
-  { id: "KE_KCAA",      name: "Director General",             organization: "KCAA — Kenya Civil Aviation Authority",    countryCode: "KE",  email: "info@kcaa.or.ke" },
-  { id: "KE_KQ",        name: "Commercial Department",        organization: "Kenya Airways",                             countryCode: "KE",  email: "commercial@kenya-airways.com" },
-  // ── Libye
-  { id: "LY_LYCAA",     name: "Director General",             organization: "LYCAA — Libyan Civil Aviation Authority",  countryCode: "LY",  email: "info@lycaa.org" },
-  // ── Madagascar
-  { id: "MG_ACM",       name: "Direction Générale",           organization: "ACM — Autorité Aviation Madagascar",       countryCode: "MG",  email: "acm@acm.mg" },
-  // ── Mali
-  { id: "ML_ANAC",      name: "Direction Générale",           organization: "ANAC Mali",                                countryCode: "ML",  email: "anac@anac.ml" },
-  // ── Maroc
-  { id: "MA_DGAC",      name: "Directeur Général",            organization: "DGAC Maroc",                               countryCode: "MA",  email: "dgac@dgac.gov.ma" },
-  { id: "MA_RAM",       name: "Direction Commerciale",        organization: "Royal Air Maroc",                          countryCode: "MA",  email: "commercial@royalairmaroc.com" },
-  // ── Mauritanie
-  { id: "MR_ANAC",      name: "Direction Générale",           organization: "ANAC Mauritanie",                          countryCode: "MR",  email: "anac@anac.mr" },
-  // ── Maurice
-  { id: "MU_ATOL",      name: "Director",                     organization: "ATOL — Air Transport Authority Mauritius", countryCode: "MU",  email: "info@atol.gov.mu" },
-  // ── Mozambique
-  { id: "MZ_IACM",      name: "Director Geral",               organization: "IACM — Instituto Aviação Civil Moçambique",countryCode: "MZ",  email: "info@iacm.gov.mz" },
-  // ── Namibie
-  { id: "NA_DCA",       name: "Director",                     organization: "DCA Namibia",                              countryCode: "NA",  email: "dca@mtc.com.na" },
-  // ── Niger
-  { id: "NE_ANAC",      name: "Direction Générale",           organization: "ANAC Niger",                               countryCode: "NE",  email: "anac@anac.ne" },
-  // ── Nigéria
-  { id: "NG_NCAA",      name: "Director General",             organization: "NCAA — Nigerian Civil Aviation Authority",  countryCode: "NG",  email: "info@ncaa.gov.ng" },
-  // ── Rwanda
-  { id: "RW_RCAA",      name: "Director General",             organization: "RCAA — Rwanda Civil Aviation Authority",   countryCode: "RW",  email: "info@rcaa.gov.rw" },
-  // ── Afrique du Sud
-  { id: "ZA_SACAA",     name: "Director",                     organization: "SACAA — South African Civil Aviation",     countryCode: "ZA",  email: "info@caa.co.za" },
-  // ── Soudan
-  { id: "SD_SCAA",      name: "Director General",             organization: "SCAA Sudan",                               countryCode: "SD",  email: "info@caasud.com" },
-  // ── Tanzanie
-  { id: "TZ_TCAA",      name: "Director General",             organization: "TCAA — Tanzania Civil Aviation Authority", countryCode: "TZ",  email: "info@tcaa.go.tz" },
-  // ── Togo
-  { id: "TG_ANAC",      name: "Direction Générale",           organization: "ANAC Togo",                                countryCode: "TG",  email: "anacto@cafe.tg" },
-  // ── Tunisie
-  { id: "TN_DGAC",      name: "Directeur Général",            organization: "DGAC Tunisie",                             countryCode: "TN",  email: "dgac@atc.nat.tn" },
-  // ── Ouganda
-  { id: "UG_UCAA",      name: "Director General",             organization: "UCAA — Uganda Civil Aviation Authority",   countryCode: "UG",  email: "info@caa.co.ug" },
-  // ── Zambie
-  { id: "ZM_CAA",       name: "Director General",             organization: "CAA Zambia",                               countryCode: "ZM",  email: "caazambia@caa.co.zm" },
-  // ── Zimbabwe
-  { id: "ZW_CAAZ",      name: "Director General",             organization: "CAAZ — Civil Aviation Authority Zimbabwe", countryCode: "ZW",  email: "info@caaz.co.zw" },
-  // ── Organisations internationales
-  { id: "INT_ICAO",     name: "Regional Director",            organization: "ICAO — Organisation de l'aviation civile internationale", countryCode: "INT", email: "icaodakar@icao.int" },
-  { id: "INT_IATA",     name: "Regional Manager",             organization: "IATA — Association du transport aérien international",    countryCode: "INT", email: "iataafr@iata.org" },
-  { id: "INT_ASECNA",   name: "Directeur Général",            organization: "ASECNA",                                               countryCode: "INT", email: "asecna@asecna.org" },
-  { id: "INT_AFRAA",    name: "Secretary General",            organization: "AFRAA — African Airlines Association",                  countryCode: "INT", email: "afraa@afraa.org" },
-  // ── Constructeurs / Équipementiers
-  { id: "FR_AIRBUS",    name: "VP Africa",                    organization: "Airbus",                                   countryCode: "FR",  email: "africa@airbus.com" },
-  { id: "FR_THALES",    name: "Director Africa",              organization: "Thales",                                   countryCode: "FR",  email: "africa@thalesgroup.com" },
-  { id: "FR_SAFRAN",    name: "Director Africa",              organization: "Safran",                                   countryCode: "FR",  email: "africa@safran-group.com" },
-  { id: "US_BOEING",    name: "VP Africa & Middle East",      organization: "Boeing",                                   countryCode: "US",  email: "africa@boeing.com" },
-  { id: "US_COLLINS",   name: "Director Africa",              organization: "Collins Aerospace",                        countryCode: "US",  email: "info-africa@collins.com" },
-  { id: "AE_EMIRATES",  name: "VP Partnerships",              organization: "Emirates",                                 countryCode: "AE",  email: "partnerships@emirates.com" },
-  { id: "QA_QATARAIR",  name: "VP Partnerships",              organization: "Qatar Airways",                            countryCode: "QA",  email: "partnerships@qatarairways.com.qa" },
-  { id: "TR_TURKISH",   name: "Regional Director Africa",     organization: "Turkish Airlines",                         countryCode: "TR",  email: "africa@thy.com" },
+  { id: "ASECNA",       name: "Directeur Général",   organization: "ASECNA",            countryCode: "SN", email: "asecna@asecna.org" },
+  { id: "ANAC_TG",      name: "Direction Générale",  organization: "ANAC Togo",         countryCode: "TG", email: "anacto@cafe.tg" },
+  { id: "AU",           name: "Chairperson",         organization: "African Union",      countryCode: "ET", email: "au@africa-union.org" },
+  { id: "AFCFTA",       name: "Secretary-General",   organization: "AfCFTA",            countryCode: "GH", email: "info@afcfta.au.int" },
+  { id: "AFREXIMBANK",  name: "President",           organization: "AFREXIMBANK",       countryCode: "EG", email: "info@afreximbank.com" },
+  { id: "AFDB",         name: "President",           organization: "AfDB",              countryCode: "CI", email: "afdb@afdb.org" },
+  { id: "ET_AIRLINES",  name: "CEO",                 organization: "Ethiopian Airlines", countryCode: "ET", email: "commercial@ethiopianairlines.com" },
+  { id: "SALT",         name: "Direction",           organization: "SALT",              countryCode: "TG", email: "info@salt.tg" },
+  { id: "UNECA",        name: "Executive Secretary", organization: "UNECA",             countryCode: "ET", email: "uneca@un.org" },
+  { id: "ACSA",         name: "CEO",                 organization: "ACSA",              countryCode: "ZA", email: "info@acsa.co.za" },
+  { id: "WIETC",        name: "Direction",           organization: "WIETC",             countryCode: "SN", email: "info@wietc.aero" },
+  { id: "AEROTRANSPORT",name: "Direction",           organization: "AEROTRANSPORT",     countryCode: "AO", email: "info@aerotransport.ao" },
+  { id: "ASAIGE_PAL",   name: "Direction",           organization: "ASAIGE-PAL",        countryCode: "SN", email: "info@asaige-pal.com" },
+  { id: "HOTEL2FEV",    name: "Direction",           organization: "Hôtel 2 Février",   countryCode: "TG", email: "reservations@hotel2fevrier.tg" },
+  { id: "ASKY",         name: "CEO",                 organization: "ASKY Airlines",     countryCode: "TG", email: "commercial@flyasky.com" },
+  { id: "ST_HANDLING",  name: "Direction",           organization: "ST HANDLING",       countryCode: "TG", email: "info@st-handling.aero" },
+  { id: "ATNS",         name: "CEO",                 organization: "ATNS",              countryCode: "ZA", email: "info@atns.co.za" },
+  { id: "AEROVAULT",    name: "CEO",                 organization: "Aerovault",         countryCode: "ZA", email: "info@aerovault.co.za" },
 ];
 
 export function getPartnersForCountry(countryCode: string): Partner[] {
