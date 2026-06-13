@@ -1,7 +1,7 @@
 "use client";
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Users, DoorOpen, Check, Loader2, Wifi, Lock } from "lucide-react";
+import { Users, DoorOpen, Check, Loader2, Lock } from "lucide-react";
 import { Reservation } from "@/lib/data";
 import { useStore } from "@/lib/store";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -72,7 +72,7 @@ export default function NouvellePage() {
 
   const [date, setDate] = useState("2026-06-15");
   const [time, setTime] = useState("08:00");
-  const [selectedRoom, setSelectedRoom] = useState("visio");
+  const [selectedRoom, setSelectedRoom] = useState("");
 
   const [countryCode, setCountryCode] = useState("");
   const [partnerId, setPartnerId] = useState("");
@@ -117,7 +117,7 @@ export default function NouvellePage() {
       return;
     }
 
-    if (selectedRoom !== "visio" && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 32)) {
+    if (selectedRoom && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 32)) {
       setError((roomDayCount[selectedRoom] ?? 0) >= 32
         ? t.newRes.errorMaxSlots
         : t.newRes.errorSlotTaken);
@@ -126,7 +126,7 @@ export default function NouvellePage() {
 
     setLoading(true);
 
-    const roomName = selectedRoom === "visio" ? "Visio" : rooms.find(r => r.id === selectedRoom)?.name ?? "";
+    const roomName = rooms.find(r => r.id === selectedRoom)?.name ?? "";
     const room = rooms.find(r => r.id === selectedRoom);
     const inviteeEmail = selectedPartner?.email;
     const inviteeLabel = selectedPartner ? `${selectedPartner.name} — ${selectedPartner.organization}` : "";
@@ -142,7 +142,7 @@ export default function NouvellePage() {
         title: type === "bilateral" ? `Rencontre avec ${inviteeLabel}` : (subject || `${roomName} — Réservation`),
         description: message,
         inviteeEmail: type === "bilateral" ? inviteeEmail : undefined,
-        room: selectedRoom === "visio" ? undefined : selectedRoom,
+        room: selectedRoom || undefined,
         location: roomName,
         capacity: room?.capacity,
       }),
@@ -220,7 +220,7 @@ export default function NouvellePage() {
             ] as const).map(([rtype, Icon, label, desc]) => (
               <button
                 key={rtype}
-                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "visio" : "a"); }}
+                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); }}
                 className={cn(
                   "flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left",
                   type === rtype ? "border-brand bg-brand-light" : "border-border bg-card hover:border-brand/30"
@@ -284,20 +284,6 @@ export default function NouvellePage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
-                {type === "bilateral" && (
-                  <button type="button" onClick={() => setSelectedRoom("visio")}
-                    className={cn(
-                      "flex flex-col items-start gap-1 p-4 rounded-xl border-2 transition-all text-left",
-                      selectedRoom === "visio" ? "border-brand bg-brand-light" : "border-border bg-background hover:border-brand/30"
-                    )}>
-                    <div className="flex items-center gap-2">
-                      <Wifi className={cn("w-4 h-4", selectedRoom === "visio" ? "text-brand" : "text-muted-foreground")} />
-                      <p className={cn("text-sm font-semibold", selectedRoom === "visio" ? "text-brand" : "text-foreground")}>Visio</p>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Lien Meet, Teams, Zoom…</p>
-                  </button>
-                )}
-
                 {rooms.map(room => {
                   const slotBooked = bookedRooms[room.id];
                   const dayFull = (roomDayCount[room.id] ?? 0) >= 32;
@@ -346,14 +332,6 @@ export default function NouvellePage() {
 
             {type === "bilateral" && (
               <>
-                {selectedRoom === "visio" && (
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">{t.newRes.visioLink}</label>
-                    <input type="text" placeholder={t.newRes.visioPlaceholder}
-                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
-                  </div>
-                )}
-
                 {/* Pays + Partenaire */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
                   <div className="flex flex-col gap-1.5">
