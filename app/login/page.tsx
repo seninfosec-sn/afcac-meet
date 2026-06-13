@@ -47,7 +47,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     const code = otp.join("");
-    if (code.length < 6) { setError("Veuillez entrer le code à 6 chiffres."); return; }
+    if (code.length < 6) { setError(t.login.codeRequired); return; }
     setLoading(true);
     const res = await fetch("/api/auth/verify-otp", {
       method: "POST",

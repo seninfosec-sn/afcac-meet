@@ -113,7 +113,7 @@ export default function NouvellePage() {
     setError(null);
 
     if (type === "bilateral" && !selectedPartner) {
-      setError("Veuillez sélectionner un pays et un partenaire.");
+      setError(t.newRes.errorSelectPartner);
       return;
     }
 
@@ -139,7 +139,7 @@ export default function NouvellePage() {
         date,
         startTime: time,
         endTime,
-        title: type === "bilateral" ? `Rencontre avec ${inviteeLabel}` : (subject || `${roomName} — Réservation`),
+        title: type === "bilateral" ? `${t.newRes.meetingWith} ${inviteeLabel}` : (subject || `${roomName} — ${t.newRes.roomReservation}`),
         description: message,
         inviteeEmail: type === "bilateral" ? inviteeEmail : undefined,
         room: selectedRoom || undefined,
@@ -168,10 +168,10 @@ export default function NouvellePage() {
       }).catch(() => null);
 
       if (!mailRes || !mailRes.ok) {
-        let mailErr = "Réservation créée, mais l'email d'invitation n'a pas pu être envoyé.";
+        let mailErr = t.newRes.mailFailed;
         try {
           const d = await mailRes?.json();
-          if (d?.error) mailErr = `Réservation créée. Email non envoyé : ${d.error}`;
+          if (d?.error) mailErr = `${t.newRes.mailFailed} (${d.error})`;
         } catch { /* ignore */ }
         setError(mailErr);
         refresh();
@@ -335,14 +335,14 @@ export default function NouvellePage() {
                 {/* Pays + Partenaire */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Pays</label>
+                    <label className="text-sm font-medium">{t.newRes.country}</label>
                     <select
                       required
                       value={countryCode}
                       onChange={e => setCountryCode(e.target.value)}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
                     >
-                      <option value="">— {lang === "EN" ? "Select a country" : lang === "PT" ? "Selecionar um país" : "Sélectionner un pays"} —</option>
+                      <option value="">— {t.newRes.selectCountry} —</option>
                       {[...COUNTRIES].sort((a, b) => getCountryName(a, lang).localeCompare(getCountryName(b, lang))).map(c => (
                         <option key={c.code} value={c.code}>{c.flag} {getCountryName(c, lang)}</option>
                       ))}
@@ -350,14 +350,14 @@ export default function NouvellePage() {
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium">Partenaire</label>
+                    <label className="text-sm font-medium">{t.newRes.partner}</label>
                     <select
                       required
                       value={partnerId}
                       onChange={e => setPartnerId(e.target.value)}
                       className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
                     >
-                      <option value="">— {lang === "EN" ? "Select a partner" : lang === "PT" ? "Selecionar um parceiro" : "Sélectionner un partenaire"} —</option>
+                      <option value="">— {t.newRes.selectPartner} —</option>
                       {PARTNERS.map(p => (
                         <option key={p.id} value={p.id}>{p.organization}</option>
                       ))}
@@ -368,7 +368,7 @@ export default function NouvellePage() {
                 {selectedPartner && (
                   <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-brand-light border border-brand/20 text-xs text-brand">
                     <span className="font-semibold">{COUNTRIES.find(c => c.code === selectedPartner.countryCode)?.flag}</span>
-                    <span>Invitation envoyée à <strong>{selectedPartner.email}</strong></span>
+                    <span>{t.newRes.invitationSentTo} <strong>{selectedPartner.email}</strong></span>
                   </div>
                 )}
 

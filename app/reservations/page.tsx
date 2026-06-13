@@ -61,19 +61,19 @@ export default function ReservationsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "proposed", proposedDate: date, proposedStartTime: startTime, proposedEndTime: endTime, tableType: "bilateral" }),
     });
-    toast.success("Créneau proposé", { description: `Votre proposition pour le ${date} a été envoyée.` });
+    toast.success(t.reservations.toastProposed, { description: t.reservations.toastProposedDesc(date) });
     refresh();
     setProposing(null);
   }
 
   async function handleConfirm(r: Reservation) {
     await updateStatus(r.id, "confirmed", "bilateral");
-    toast.success("Invitation confirmée", { description: `"${r.title}" est maintenant confirmé.` });
+    toast.success(t.reservations.toastConfirmed, { description: t.reservations.toastConfirmedDesc(r.title) });
   }
 
   async function handleRefuse(r: Reservation) {
     await updateStatus(r.id, "cancelled", "bilateral");
-    toast.info("Invitation refusée");
+    toast.info(t.reservations.toastRefused);
   }
 
   function renderActions(r: Reservation) {

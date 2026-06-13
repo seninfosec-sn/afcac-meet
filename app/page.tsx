@@ -12,7 +12,6 @@ import { cn } from "@/lib/utils";
 import { Reservation } from "@/lib/data";
 import { toast } from "sonner";
 
-const DAYS = ["Lu", "Ma", "Me", "Je", "Ve", "Sa", "Di"];
 const EXPO_START = 15;
 const EXPO_END = 19;
 const CURRENT_MONTH = "2026-06";
@@ -119,7 +118,7 @@ export default function CalendarPage() {
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-2">
-            {DAYS.map(d => (
+            {t.dashboard.days.map(d => (
               <div key={d} className="text-center text-xs font-medium text-muted-foreground py-1">{d}</div>
             ))}
           </div>
@@ -201,11 +200,11 @@ export default function CalendarPage() {
           onClose={() => setDetailReservation(null)}
           onConfirm={async r => {
             await updateStatus(r.id, "confirmed", "bilateral");
-            toast.success("Invitation confirmée", { description: `"${r.title}" est maintenant confirmé.` });
+            toast.success(t.dashboard.toastConfirmed, { description: t.dashboard.toastConfirmedDesc(r.title) });
           }}
           onRefuse={async r => {
             await updateStatus(r.id, "cancelled", "bilateral");
-            toast.info("Invitation refusée");
+            toast.info(t.dashboard.toastRefused);
           }}
           onPropose={r => setProposingFromDetail(r)}
           onQR={r => setQrFromDetail(r)}
@@ -222,7 +221,7 @@ export default function CalendarPage() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ status: "proposed", proposedDate: date, proposedStartTime: start, proposedEndTime: end, tableType: "bilateral" }),
             });
-            toast.success("Créneau proposé", { description: `Proposition envoyée pour le ${date}.` });
+            toast.success(t.dashboard.toastProposed, { description: t.dashboard.toastProposedDesc(date) });
             setProposingFromDetail(null);
           }}
         />
