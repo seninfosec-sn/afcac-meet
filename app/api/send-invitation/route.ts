@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sendMail, FROM, REPLY_TO } from "@/lib/mailer";
 
 export async function POST(req: NextRequest) {
-  const { to, date, time, location, message, senderName } = await req.json();
+  const { to, date, time, location, message, senderName, senderEmail } = await req.json();
 
   if (!to || !date || !time || !location) {
     return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
@@ -17,6 +17,7 @@ export async function POST(req: NextRequest) {
     `Heure    : ${time}`,
     `Lieu     : ${location}`,
     message ? `\nMessage  : ${message}` : "",
+    senderEmail ? `\nContact  : ${senderEmail}` : "",
     "",
     `Consultez vos réservations : ${appUrl}/reservations`,
     "",
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
       from: FROM,
       to,
       cc: ["sfall@afcac.org"],
-      replyTo: REPLY_TO,
+      replyTo: senderEmail || REPLY_TO,
       subject: `Invitation a une rencontre bilaterale - ${date} a ${time}`,
       text: textBody,
       html: `
@@ -58,6 +59,10 @@ export async function POST(req: NextRequest) {
                   <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Lieu</td>
                   <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;">${location}</td>
                 </tr>
+                ${senderEmail ? `<tr>
+                  <td style="padding: 6px 0; color: #6b7280; font-size: 13px;">Contact</td>
+                  <td style="padding: 6px 0; color: #111827; font-size: 14px; font-weight: 600;"><a href="mailto:${senderEmail}" style="color:#145847;">${senderEmail}</a></td>
+                </tr>` : ""}
               </table>
             </div>
 

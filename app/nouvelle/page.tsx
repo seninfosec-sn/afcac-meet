@@ -79,6 +79,7 @@ export default function NouvellePage() {
   const [countryCode, setCountryCode] = useState("");
   const [partnerId, setPartnerId] = useState("");
   const [otherText, setOtherText] = useState("");
+  const [senderEmail, setSenderEmail] = useState("");
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
 
@@ -185,7 +186,7 @@ export default function NouvellePage() {
       const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: inviteeEmail, date, time, location: roomName, message, senderName: "AFCAC — sfall@afcac.org" }),
+        body: JSON.stringify({ to: inviteeEmail, date, time, location: roomName, message, senderName: "AFCAC — sfall@afcac.org", senderEmail }),
       }).catch(() => null);
 
       if (!mailRes || !mailRes.ok) {
@@ -424,6 +425,21 @@ export default function NouvellePage() {
                     />
                   </div>
                 )}
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">
+                    {lang === "EN" ? "Your email address" : lang === "PT" ? "Seu endereço de email" : "Votre adresse email"}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder={lang === "EN" ? "your@email.com" : lang === "PT" ? "seu@email.com" : "votre@email.com"}
+                    value={senderEmail}
+                    onChange={e => setSenderEmail(e.target.value)}
+                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
+                  />
+                </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium">{t.newRes.inviteMessage}</label>
