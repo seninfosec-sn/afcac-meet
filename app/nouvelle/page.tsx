@@ -72,7 +72,7 @@ export default function NouvellePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [date, setDate] = useState("2026-06-15");
-  const [time, setTime] = useState("08:00");
+  const [time, setTime] = useState("08:15");
   const [selectedRoom, setSelectedRoom] = useState("");
 
   const [contactType, setContactType] = useState<ContactType>("");
