@@ -472,7 +472,7 @@ export default function NouvellePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium">
-                      {lang === "EN" ? "Email address" : lang === "PT" ? "Endereço de email" : "Adresse email"}
+                      {lang === "EN" ? "Requester Email address" : lang === "PT" ? "Email do solicitante" : "Email du demandeur"}
                       <span className="text-red-500 ml-1">*</span>
                     </label>
                     <input type="email" required
