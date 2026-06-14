@@ -133,6 +133,8 @@ export default function NouvellePage() {
       if (!message.trim()) { setError(t.newRes.inviteMessage + " " + (lang === "EN" ? "is required." : lang === "PT" ? "é obrigatório." : "est obligatoire.")); return; }
     }
 
+    if (!selectedRoom) { setError(t.newRes.errorNoRoom); return; }
+
     if (selectedRoom && (bookedRooms[selectedRoom] || (roomDayCount[selectedRoom] ?? 0) >= 32)) {
       setError((roomDayCount[selectedRoom] ?? 0) >= 32
         ? t.newRes.errorMaxSlots
