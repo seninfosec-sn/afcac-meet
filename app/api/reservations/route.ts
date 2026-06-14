@@ -8,6 +8,7 @@ import {
   countRoomUsageForDay,
   insertNotification,
   isRoomLocked,
+  isSlotLocked,
 } from "@/lib/db";
 
 const EXPO_DATES = new Set(["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"]);
@@ -67,6 +68,8 @@ export async function POST(req: NextRequest) {
       if (room) {
         if (await isRoomLocked(room))
           return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
+        if (await isSlotLocked(room, date, startTime))
+          return NextResponse.json({ errorKey: "errorSlotLocked" }, { status: 409 });
         const conflict = await hasRoomConflict(room, slotStart, slotEnd);
         if (conflict)
           return NextResponse.json({ errorKey: "errorSlotTaken" }, { status: 409 });
@@ -103,6 +106,9 @@ export async function POST(req: NextRequest) {
 
       if (await isRoomLocked(room))
         return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
+
+      if (await isSlotLocked(room, date, startTime))
+        return NextResponse.json({ errorKey: "errorSlotLocked" }, { status: 409 });
 
       const conflict = await hasRoomConflict(room, slotStart, slotEnd);
       if (conflict) {

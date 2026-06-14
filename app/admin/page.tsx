@@ -47,6 +47,17 @@ export default function AdminPage() {
   const [roomForm, setRoomForm]   = useState({ name: "", floor: "", capacity: "0", equipment: "" });
   const [roomAction, setRoomAction] = useState<string | null>(null);
 
+  // Slot locks
+  interface SlotLock { id: string; room_id: string; date: string; start_time: string; reason: string; }
+  const [slotLocks, setSlotLocks]       = useState<SlotLock[]>([]);
+  const [lockForm, setLockForm]         = useState({ roomId: "", date: "2026-06-15", startTime: "08:00", reason: "" });
+  const [lockAction, setLockAction]     = useState<string | null>(null);
+  const [lockMsg, setLockMsg]           = useState<string | null>(null);
+  const EXPO_DATES_ADMIN = ["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"];
+  const SLOT_TIMES = Array.from({ length: 32 }, (_, i) => {
+    const m = i * 45; return `${String(Math.floor(m/60)).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
+  });
+
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -74,7 +85,14 @@ export default function AdminPage() {
     } catch { /* silent */ }
   }, []);
 
-  useEffect(() => { fetchData(); fetchRooms(); }, [fetchData, fetchRooms]);
+  const fetchSlotLocks = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/room-locks");
+      if (res.ok) setSlotLocks((await res.json()).locks ?? []);
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => { fetchData(); fetchRooms(); fetchSlotLocks(); }, [fetchData, fetchRooms, fetchSlotLocks]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -237,6 +255,29 @@ export default function AdminPage() {
     await fetch(`/api/admin/rooms/${room.id}`, { method: "DELETE" });
     await fetchRooms();
     setRoomAction(null);
+  }
+
+  async function handleAddLock() {
+    if (!lockForm.roomId || !lockForm.date || !lockForm.startTime) return;
+    setLockAction("adding");
+    const res = await fetch("/api/admin/room-locks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId: lockForm.roomId, date: lockForm.date, startTime: lockForm.startTime, reason: lockForm.reason }),
+    });
+    if (res.ok) {
+      setLockMsg(t.admin.slotLockAdded);
+      setTimeout(() => setLockMsg(null), 3000);
+    }
+    await fetchSlotLocks();
+    setLockAction(null);
+  }
+
+  async function handleDeleteLock(id: string) {
+    setLockAction(id);
+    await fetch(`/api/admin/room-locks/${id}`, { method: "DELETE" });
+    await fetchSlotLocks();
+    setLockAction(null);
   }
 
   // ── Loading / error ────────────────────────────────────────────
@@ -669,6 +710,109 @@ export default function AdminPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Slot locks ── */}
+          <div className="bg-card rounded-2xl border border-border p-5 flex flex-col gap-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center shrink-0">
+                <Lock className="w-4 h-4 text-red-500" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">{t.admin.slotLocksTitle}</h3>
+                <p className="text-xs text-muted-foreground">{t.admin.slotLocksDesc}</p>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.admin.slotLockRoom}</label>
+                <select
+                  value={lockForm.roomId}
+                  onChange={e => setLockForm(f => ({ ...f, roomId: e.target.value }))}
+                  className="h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                >
+                  <option value="">— {t.admin.slotLockRoom} —</option>
+                  {rooms.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.admin.slotLockDate}</label>
+                <select
+                  value={lockForm.date}
+                  onChange={e => setLockForm(f => ({ ...f, date: e.target.value }))}
+                  className="h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                >
+                  {EXPO_DATES_ADMIN.map(d => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.admin.slotLockTime}</label>
+                <select
+                  value={lockForm.startTime}
+                  onChange={e => setLockForm(f => ({ ...f, startTime: e.target.value }))}
+                  className="h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                >
+                  {SLOT_TIMES.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.admin.slotLockReason}</label>
+                <input
+                  type="text"
+                  value={lockForm.reason}
+                  onChange={e => setLockForm(f => ({ ...f, reason: e.target.value }))}
+                  placeholder="Ex: Cérémonie d'ouverture"
+                  className="h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleAddLock}
+                disabled={!lockForm.roomId || lockAction === "adding"}
+                className="flex items-center gap-2 text-sm text-white bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {lockAction === "adding" ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+                {t.admin.slotLockAdd}
+              </button>
+              {lockMsg && <span className="text-sm text-brand font-medium">{lockMsg}</span>}
+            </div>
+
+            {/* List */}
+            <div className="border-t border-border pt-4">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">{t.admin.slotLocksListTitle}</p>
+              {slotLocks.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t.admin.slotLocksEmpty}</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {slotLocks.map(lock => {
+                    const roomName = rooms.find(r => r.id === lock.room_id)?.name ?? lock.room_id;
+                    return (
+                      <div key={lock.id} className="flex items-center justify-between gap-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                        <div className="flex items-center gap-3 text-sm min-w-0">
+                          <Lock className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                          <span className="font-medium text-red-800">{roomName}</span>
+                          <span className="text-red-600">{lock.date}</span>
+                          <span className="text-red-600 font-mono">{lock.start_time}</span>
+                          {lock.reason && <span className="text-red-400 text-xs truncate">— {lock.reason}</span>}
+                        </div>
+                        <button
+                          onClick={() => handleDeleteLock(lock.id)}
+                          disabled={lockAction === lock.id}
+                          className="p-1.5 rounded-md text-red-400 hover:text-red-700 hover:bg-red-100 transition-colors shrink-0"
+                          title={t.admin.slotLockDelete}
+                        >
+                          {lockAction === lock.id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </>
       )}

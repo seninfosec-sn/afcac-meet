@@ -437,6 +437,72 @@ export async function isRoomLocked(id: string): Promise<boolean> {
   return Boolean((rows[0] as { locked: boolean }).locked);
 }
 
+// ── Room Slot Locks ──────────────────────────────────────────────
+
+export interface DbSlotLock {
+  id: string;
+  room_id: string;
+  date: string;
+  start_time: string;
+  reason: string;
+  created_at: string;
+}
+
+async function ensureRoomSlotLocksTable() {
+  await sql`
+    CREATE TABLE IF NOT EXISTS room_slot_locks (
+      id         TEXT PRIMARY KEY,
+      room_id    TEXT NOT NULL,
+      date       TEXT NOT NULL,
+      start_time TEXT NOT NULL,
+      reason     TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+}
+
+export async function getAllSlotLocks(): Promise<DbSlotLock[]> {
+  await ensureRoomSlotLocksTable();
+  const rows = await sql`SELECT * FROM room_slot_locks ORDER BY date ASC, start_time ASC, room_id ASC`;
+  return rows as unknown as DbSlotLock[];
+}
+
+export async function getSlotLocksForDate(date: string): Promise<DbSlotLock[]> {
+  await ensureRoomSlotLocksTable();
+  const rows = await sql`SELECT * FROM room_slot_locks WHERE date = ${date} ORDER BY start_time ASC`;
+  return rows as unknown as DbSlotLock[];
+}
+
+export async function insertSlotLock(data: {
+  roomId: string; date: string; startTime: string; reason?: string;
+}): Promise<DbSlotLock> {
+  await ensureRoomSlotLocksTable();
+  const id = `lock-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  await sql`
+    INSERT INTO room_slot_locks (id, room_id, date, start_time, reason)
+    VALUES (${id}, ${data.roomId}, ${data.date}, ${data.startTime}, ${data.reason || ''})
+    ON CONFLICT DO NOTHING
+  `;
+  const rows = await sql`SELECT * FROM room_slot_locks WHERE id = ${id} LIMIT 1`;
+  return rows[0] as unknown as DbSlotLock;
+}
+
+export async function deleteSlotLock(id: string): Promise<boolean> {
+  await ensureRoomSlotLocksTable();
+  const r = await sql`DELETE FROM room_slot_locks WHERE id = ${id} RETURNING id`;
+  return r.length > 0;
+}
+
+export async function isSlotLocked(roomId: string, date: string, startTime: string): Promise<boolean> {
+  await ensureRoomSlotLocksTable();
+  const rows = await sql`
+    SELECT id FROM room_slot_locks
+    WHERE room_id = ${roomId} AND date = ${date} AND start_time = ${startTime}
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
 // Conflict check for room bookings
 export async function hasRoomConflict(
   roomId: string, slotStart: string, slotEnd: string
