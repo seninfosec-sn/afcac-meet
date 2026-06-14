@@ -35,7 +35,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email }),
     });
     setLoading(false);
-    if (!res.ok) { const data = await res.json(); setError(data.error); return; }
+    if (!res.ok) { const data = await res.json(); const k = data.errorKey as keyof typeof t.login | undefined; setError((k && t.login[k]) ? String(t.login[k]) : t.login.errorSendFailed); return; }
     const data = await res.json();
     if (data.dev_otp) setDevOtp(data.dev_otp);
     setStep("otp");
@@ -57,7 +57,8 @@ export default function LoginPage() {
     setLoading(false);
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error);
+      const k = data.errorKey as keyof typeof t.login | undefined;
+      setError((k && t.login[k]) ? String(t.login[k]) : t.login.errorInvalidCode);
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
       return;
@@ -89,7 +90,8 @@ export default function LoginPage() {
     setLoading(false);
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error);
+      const k = data.errorKey as keyof typeof t.login | undefined;
+      setError((k && t.login[k]) ? String(t.login[k]) : t.login.errorInvalidCode);
       setOtp(["", "", "", "", "", ""]);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
       return;
@@ -108,7 +110,7 @@ export default function LoginPage() {
       body: JSON.stringify({ email }),
     });
     setLoading(false);
-    if (!res.ok) { const data = await res.json(); setError(data.error); return; }
+    if (!res.ok) { const data = await res.json(); const k = data.errorKey as keyof typeof t.login | undefined; setError((k && t.login[k]) ? String(t.login[k]) : t.login.errorSendFailed); return; }
     const data = await res.json();
     if (data.dev_otp) setDevOtp(data.dev_otp);
     setResendCooldown(60);

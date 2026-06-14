@@ -49,10 +49,10 @@ export async function POST(req: NextRequest) {
     const { type, date, startTime, endTime, title, description, inviteeEmail, room, location } = body;
 
     if (!EXPO_DATES.has(date)) {
-      return NextResponse.json({ error: "Les réservations sont uniquement autorisées du 15 au 19 juin 2026." }, { status: 400 });
+      return NextResponse.json({ errorKey: "errorInvalidDate" }, { status: 400 });
     }
     if (!isValidSlot(startTime, endTime)) {
-      return NextResponse.json({ error: "Créneau invalide. Les créneaux sont de 45 min (00:00–23:45)." }, { status: 400 });
+      return NextResponse.json({ errorKey: "errorInvalidSlot" }, { status: 400 });
     }
 
     const slotStart = `${date}T${startTime}:00Z`;
@@ -61,18 +61,18 @@ export async function POST(req: NextRequest) {
 
     if (type === "bilateral") {
       if (!inviteeEmail) {
-        return NextResponse.json({ error: "Email de l'invité requis" }, { status: 400 });
+        return NextResponse.json({ errorKey: "errorNoRoom" }, { status: 400 });
       }
 
       if (room) {
         if (await isRoomLocked(room))
-          return NextResponse.json({ error: "Cette salle est verrouillée par l'administrateur." }, { status: 403 });
+          return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
         const conflict = await hasRoomConflict(room, slotStart, slotEnd);
         if (conflict)
-          return NextResponse.json({ error: "Cette salle est déjà réservée sur ce créneau." }, { status: 409 });
+          return NextResponse.json({ errorKey: "errorSlotTaken" }, { status: 409 });
         const dayCount = await countRoomUsageForDay(room, date);
         if (dayCount >= MAX_SLOTS_PER_DAY)
-          return NextResponse.json({ error: "Cette salle a atteint le maximum de 13 réservations pour cette journée." }, { status: 409 });
+          return NextResponse.json({ errorKey: "errorMaxSlots" }, { status: 409 });
       }
 
       const meetingTitle = title || `Rencontre avec ${inviteeEmail}`;
@@ -98,19 +98,19 @@ export async function POST(req: NextRequest) {
       });
     } else {
       if (!room) {
-        return NextResponse.json({ error: "Salle requise" }, { status: 400 });
+        return NextResponse.json({ errorKey: "errorNoRoom" }, { status: 400 });
       }
 
       if (await isRoomLocked(room))
-        return NextResponse.json({ error: "Cette salle est verrouillée par l'administrateur." }, { status: 403 });
+        return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
 
       const conflict = await hasRoomConflict(room, slotStart, slotEnd);
       if (conflict) {
-        return NextResponse.json({ error: "Cette salle est déjà réservée sur ce créneau." }, { status: 409 });
+        return NextResponse.json({ errorKey: "errorSlotTaken" }, { status: 409 });
       }
       const dayCount = await countRoomUsageForDay(room, date);
       if (dayCount >= MAX_SLOTS_PER_DAY) {
-        return NextResponse.json({ error: "Cette salle a atteint le maximum de 13 réservations pour cette journée." }, { status: 409 });
+        return NextResponse.json({ errorKey: "errorMaxSlots" }, { status: 409 });
       }
 
       await insertRoomReservation({
@@ -128,6 +128,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/reservations]", err);
-    return NextResponse.json({ error: "Erreur serveur inattendue." }, { status: 500 });
+    return NextResponse.json({ errorKey: "errorCreation" }, { status: 500 });
   }
 }

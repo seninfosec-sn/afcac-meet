@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const { email } = await req.json();
 
   if (!email) {
-    return NextResponse.json({ error: "Email requis" }, { status: 400 });
+    return NextResponse.json({ errorKey: "errorEmailRequired" }, { status: 400 });
   }
 
   const otp = generateOtp();
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     console.error("[Resend] Erreur envoi OTP:", msg);
     if (!IS_DEV) {
       return NextResponse.json(
-        { error: "Impossible d'envoyer le code. Vérifiez votre adresse email." },
+        { errorKey: "errorSendFailed" },
         { status: 500 }
       );
     }

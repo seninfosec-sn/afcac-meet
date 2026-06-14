@@ -10,17 +10,14 @@ export async function POST(req: NextRequest) {
   const { email, otp } = await req.json();
 
   if (!email || !otp) {
-    return NextResponse.json({ error: "Email et code requis" }, { status: 400 });
+    return NextResponse.json({ errorKey: "errorExpiredSession" }, { status: 400 });
   }
 
   // Read the OTP cookie
   const otpToken = req.cookies.get("afcac_expo_meet_otp")?.value;
 
   if (!otpToken) {
-    return NextResponse.json(
-      { error: "Session expirée. Veuillez demander un nouveau code." },
-      { status: 401 }
-    );
+    return NextResponse.json({ errorKey: "errorExpiredSession" }, { status: 401 });
   }
 
   // Verify and decode the OTP token
@@ -29,15 +26,12 @@ export async function POST(req: NextRequest) {
     const { payload: p } = await jwtVerify(otpToken, SECRET);
     payload = p as { email: string; otp: string };
   } catch {
-    return NextResponse.json(
-      { error: "Code expiré. Veuillez demander un nouveau code." },
-      { status: 401 }
-    );
+    return NextResponse.json({ errorKey: "errorExpiredCode" }, { status: 401 });
   }
 
   // Validate email and OTP match
   if (payload.email !== email || payload.otp !== otp) {
-    return NextResponse.json({ error: "Code invalide." }, { status: 401 });
+    return NextResponse.json({ errorKey: "errorInvalidCode" }, { status: 401 });
   }
 
   // Upsert user in DB

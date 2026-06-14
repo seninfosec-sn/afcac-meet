@@ -130,7 +130,7 @@ export default function NouvellePage() {
         (contactType === "partner" && !selectedPartner) ||
         (contactType === "other" && !otherText.trim());
       if (invalid) { setError(t.newRes.errorSelectContact); return; }
-      if (!message.trim()) { setError(t.newRes.inviteMessage + " " + (lang === "EN" ? "is required." : lang === "PT" ? "é obrigatório." : "est obligatoire.")); return; }
+      if (!message.trim()) { setError(t.newRes.errorMessageRequired); return; }
     }
 
     if (!selectedRoom) { setError(t.newRes.errorNoRoom); return; }
@@ -187,7 +187,8 @@ export default function NouvellePage() {
     if (!res.ok) {
       try {
         const data = await res.json();
-        setError(data.error ?? t.newRes.errorCreation);
+        const key = data.errorKey as keyof typeof t.newRes | undefined;
+        setError((key && t.newRes[key]) ? String(t.newRes[key]) : t.newRes.errorCreation);
       } catch {
         setError(t.newRes.errorCreation);
       }
