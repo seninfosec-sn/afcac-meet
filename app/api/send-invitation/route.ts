@@ -4,7 +4,7 @@ import { sendMail, FROM } from "@/lib/mailer";
 const SFALL = "sfall@afcac.org";
 
 export async function POST(req: NextRequest) {
-  const { date, time, location, message, senderEmail, contactLabel, meetingTitle, firstName, lastName, jobTitle, requesterCountry, organization } = await req.json();
+  const { date, time, location, message, senderEmail, contactLabel, meetingTitle, firstName, lastName, organization, jobTitle, requesterCountry, whatsapp } = await req.json();
 
   if (!date || !time) {
     return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
@@ -18,10 +18,11 @@ export async function POST(req: NextRequest) {
     `Nouvelle demande de rencontre bilatérale reçue via la plateforme AFCAC EXPO 2026.`,
     "",
     `Nom          : ${fullName}`,
+    organization    ? `Entreprise   : ${organization}` : "",
     jobTitle        ? `Titre        : ${jobTitle}` : "",
     requesterCountry ? `Pays         : ${requesterCountry}` : "",
-    organization    ? `Organisation : ${organization}` : "",
     `Email        : ${senderEmail || "—"}`,
+    whatsapp        ? `WhatsApp     : ${whatsapp}` : "",
     "",
     `Avec         : ${contactLabel || meetingTitle || "—"}`,
     `Date         : ${date}`,
@@ -77,6 +78,10 @@ export async function POST(req: NextRequest) {
                     <a href="mailto:${senderEmail}" style="color: #145847;">${senderEmail || "—"}</a>
                   </td>
                 </tr>
+                ${whatsapp ? `<tr>
+                  <td style="padding: 7px 0; color: #6b7280; font-size: 13px;">WhatsApp</td>
+                  <td style="padding: 7px 0; color: #111827; font-size: 14px;">${whatsapp}</td>
+                </tr>` : ""}
                 <tr><td colspan="2" style="padding: 10px 0 2px; border-top: 1px solid #e5e7eb;"></td></tr>
                 <tr>
                   <td style="padding: 7px 0; color: #6b7280; font-size: 13px; vertical-align: top;">Souhaite rencontrer</td>

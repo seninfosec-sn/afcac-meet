@@ -77,9 +77,10 @@ export default function NouvellePage() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [organization, setOrganization] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [requesterCountry, setRequesterCountry] = useState("");
-  const [organization, setOrganization] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [contactType, setContactType] = useState<ContactType>("");
   const [countryCode, setCountryCode] = useState("");
   const [partnerId, setPartnerId] = useState("");
@@ -195,7 +196,7 @@ export default function NouvellePage() {
       const mailRes = await fetch("/api/send-invitation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, time, location: roomName, message, senderEmail, contactLabel, meetingTitle, firstName, lastName, jobTitle, requesterCountry, organization }),
+        body: JSON.stringify({ date, time, location: roomName, message, senderEmail, contactLabel, meetingTitle, firstName, lastName, organization, jobTitle, requesterCountry, whatsapp }),
       }).catch(() => null);
 
       if (!mailRes || !mailRes.ok) {
@@ -251,7 +252,7 @@ export default function NouvellePage() {
             ] as const).map(([rtype, Icon, label, desc]) => (
               <button
                 key={rtype}
-                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); setContactType(""); setCountryCode(""); setPartnerId(""); setOtherText(""); setFirstName(""); setLastName(""); setJobTitle(""); setRequesterCountry(""); setOrganization(""); setSenderEmail(""); }}
+                onClick={() => { setType(rtype); setSelectedRoom(rtype === "bilateral" ? "" : "a"); setContactType(""); setCountryCode(""); setPartnerId(""); setOtherText(""); setFirstName(""); setLastName(""); setOrganization(""); setJobTitle(""); setRequesterCountry(""); setWhatsapp(""); setSenderEmail(""); }}
                 className={cn(
                   "flex items-start gap-4 p-5 rounded-xl border-2 transition-all text-left",
                   type === rtype ? "border-brand bg-brand-light" : "border-border bg-card hover:border-brand/30"
@@ -449,6 +450,12 @@ export default function NouvellePage() {
                   </div>
                 </div>
 
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium">{t.newRes.organization} <span className="text-red-500">*</span></label>
+                  <input type="text" required value={organization} onChange={e => setOrganization(e.target.value)}
+                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium">{t.newRes.jobTitle} <span className="text-red-500">*</span></label>
@@ -462,25 +469,23 @@ export default function NouvellePage() {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">{t.newRes.organization} <span className="text-red-500">*</span></label>
-                  <input type="text" required value={organization} onChange={e => setOrganization(e.target.value)}
-                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium">
-                    {lang === "EN" ? "Your email address" : lang === "PT" ? "Seu endereço de email" : "Votre adresse email"}
-                    <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder={lang === "EN" ? "your@email.com" : lang === "PT" ? "seu@email.com" : "votre@email.com"}
-                    value={senderEmail}
-                    onChange={e => setSenderEmail(e.target.value)}
-                    className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-[10px]">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">
+                      {lang === "EN" ? "Email address" : lang === "PT" ? "Endereço de email" : "Adresse email"}
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
+                    <input type="email" required
+                      placeholder={lang === "EN" ? "your@email.com" : lang === "PT" ? "seu@email.com" : "votre@email.com"}
+                      value={senderEmail} onChange={e => setSenderEmail(e.target.value)}
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium">{t.newRes.whatsapp}</label>
+                    <input type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)}
+                      placeholder="+221 77 000 00 00"
+                      className="h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition-colors" />
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
