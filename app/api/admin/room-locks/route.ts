@@ -17,10 +17,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   if (!await requireAdmin()) return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
-  const { roomId, date, startTime, reason } = await req.json();
+  const { roomId, date, startTime, endTime, reason } = await req.json();
   if (!roomId || !date || !startTime) {
     return NextResponse.json({ error: "roomId, date et startTime sont requis" }, { status: 400 });
   }
-  const lock = await insertSlotLock({ roomId, date, startTime, reason });
+  const lock = await insertSlotLock({ roomId, date, startTime, endTime, reason });
   return NextResponse.json({ lock }, { status: 201 });
 }

@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       if (room) {
         if (await isRoomLocked(room))
           return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
-        if (await isSlotLocked(room, date, startTime))
+        if (await isSlotLocked(room, date, startTime, endTime))
           return NextResponse.json({ errorKey: "errorSlotLocked" }, { status: 409 });
         const conflict = await hasRoomConflict(room, slotStart, slotEnd);
         if (conflict)
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       if (await isRoomLocked(room))
         return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
 
-      if (await isSlotLocked(room, date, startTime))
+      if (await isSlotLocked(room, date, startTime, endTime))
         return NextResponse.json({ errorKey: "errorSlotLocked" }, { status: 409 });
 
       const conflict = await hasRoomConflict(room, slotStart, slotEnd);

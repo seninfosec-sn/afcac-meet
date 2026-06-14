@@ -444,6 +444,7 @@ export interface DbSlotLock {
   room_id: string;
   date: string;
   start_time: string;
+  end_time: string;
   reason: string;
   created_at: string;
 }
@@ -455,10 +456,13 @@ async function ensureRoomSlotLocksTable() {
       room_id    TEXT NOT NULL,
       date       TEXT NOT NULL,
       start_time TEXT NOT NULL,
+      end_time   TEXT NOT NULL DEFAULT '',
       reason     TEXT NOT NULL DEFAULT '',
       created_at TIMESTAMPTZ DEFAULT NOW()
     )
   `;
+  // Migration: add end_time if missing
+  await sql`ALTER TABLE room_slot_locks ADD COLUMN IF NOT EXISTS end_time TEXT NOT NULL DEFAULT ''`;
 }
 
 export async function getAllSlotLocks(): Promise<DbSlotLock[]> {
@@ -474,13 +478,13 @@ export async function getSlotLocksForDate(date: string): Promise<DbSlotLock[]> {
 }
 
 export async function insertSlotLock(data: {
-  roomId: string; date: string; startTime: string; reason?: string;
+  roomId: string; date: string; startTime: string; endTime?: string; reason?: string;
 }): Promise<DbSlotLock> {
   await ensureRoomSlotLocksTable();
   const id = `lock-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
   await sql`
-    INSERT INTO room_slot_locks (id, room_id, date, start_time, reason)
-    VALUES (${id}, ${data.roomId}, ${data.date}, ${data.startTime}, ${data.reason || ''})
+    INSERT INTO room_slot_locks (id, room_id, date, start_time, end_time, reason)
+    VALUES (${id}, ${data.roomId}, ${data.date}, ${data.startTime}, ${data.endTime || ''}, ${data.reason || ''})
     ON CONFLICT DO NOTHING
   `;
   const rows = await sql`SELECT * FROM room_slot_locks WHERE id = ${id} LIMIT 1`;
@@ -493,11 +497,14 @@ export async function deleteSlotLock(id: string): Promise<boolean> {
   return r.length > 0;
 }
 
-export async function isSlotLocked(roomId: string, date: string, startTime: string): Promise<boolean> {
+export async function isSlotLocked(roomId: string, date: string, startTime: string, endTime: string): Promise<boolean> {
   await ensureRoomSlotLocksTable();
   const rows = await sql`
     SELECT id FROM room_slot_locks
-    WHERE room_id = ${roomId} AND date = ${date} AND start_time = ${startTime}
+    WHERE room_id = ${roomId}
+      AND date = ${date}
+      AND start_time < ${endTime}
+      AND (end_time = '' OR end_time > ${startTime})
     LIMIT 1
   `;
   return rows.length > 0;

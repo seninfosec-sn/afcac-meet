@@ -48,9 +48,9 @@ export default function AdminPage() {
   const [roomAction, setRoomAction] = useState<string | null>(null);
 
   // Slot locks
-  interface SlotLock { id: string; room_id: string; date: string; start_time: string; reason: string; }
+  interface SlotLock { id: string; room_id: string; date: string; start_time: string; end_time: string; reason: string; }
   const [slotLocks, setSlotLocks]       = useState<SlotLock[]>([]);
-  const [lockForm, setLockForm]         = useState({ roomId: "", date: "2026-06-15", startTime: "08:00", reason: "" });
+  const [lockForm, setLockForm]         = useState({ roomId: "", date: "2026-06-15", startTime: "08:00", endTime: "08:45", reason: "" });
   const [lockAction, setLockAction]     = useState<string | null>(null);
   const [lockMsg, setLockMsg]           = useState<string | null>(null);
   const EXPO_DATES_ADMIN = ["2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-19"];
@@ -263,7 +263,7 @@ export default function AdminPage() {
     const res = await fetch("/api/admin/room-locks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId: lockForm.roomId, date: lockForm.date, startTime: lockForm.startTime, reason: lockForm.reason }),
+      body: JSON.stringify({ roomId: lockForm.roomId, date: lockForm.date, startTime: lockForm.startTime, endTime: lockForm.endTime, reason: lockForm.reason }),
     });
     if (res.ok) {
       setLockMsg(t.admin.slotLockAdded);
@@ -725,7 +725,7 @@ export default function AdminPage() {
             </div>
 
             {/* Form */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.admin.slotLockRoom}</label>
                 <select
@@ -755,6 +755,16 @@ export default function AdminPage() {
                   className="h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
                 >
                   {SLOT_TIMES.map(slot => <option key={slot} value={slot}>{slot}</option>)}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">{t.admin.slotLockEndTime}</label>
+                <select
+                  value={lockForm.endTime}
+                  onChange={e => setLockForm(f => ({ ...f, endTime: e.target.value }))}
+                  className="h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                >
+                  {SLOT_TIMES.filter(slot => slot > lockForm.startTime).map(slot => <option key={slot} value={slot}>{slot}</option>)}
                 </select>
               </div>
               <div className="flex flex-col gap-1">
@@ -796,7 +806,7 @@ export default function AdminPage() {
                           <Lock className="w-3.5 h-3.5 text-red-500 shrink-0" />
                           <span className="font-medium text-red-800">{roomName}</span>
                           <span className="text-red-600">{lock.date}</span>
-                          <span className="text-red-600 font-mono">{lock.start_time}</span>
+                          <span className="text-red-600 font-mono">{lock.start_time}{lock.end_time ? ` → ${lock.end_time}` : ""}</span>
                           {lock.reason && <span className="text-red-400 text-xs truncate">— {lock.reason}</span>}
                         </div>
                         <button
