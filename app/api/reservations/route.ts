@@ -5,6 +5,7 @@ import {
   insertMeetingInvite,
   insertRoomReservation,
   hasRoomConflict,
+  hasMeetingRoomConflict,
   countRoomUsageForDay,
   insertNotification,
   isRoomLocked,
@@ -70,7 +71,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ errorKey: "errorRoomLocked" }, { status: 403 });
         if (await isSlotLocked(room, date, startTime, endTime))
           return NextResponse.json({ errorKey: "errorSlotLocked" }, { status: 409 });
-        const conflict = await hasRoomConflict(room, slotStart, slotEnd);
+        const conflict = await hasRoomConflict(room, slotStart, slotEnd)
+          || await hasMeetingRoomConflict(room, slotStart, slotEnd);
         if (conflict)
           return NextResponse.json({ errorKey: "errorSlotTaken" }, { status: 409 });
         const dayCount = await countRoomUsageForDay(room, date);
@@ -110,7 +112,8 @@ export async function POST(req: NextRequest) {
       if (await isSlotLocked(room, date, startTime, endTime))
         return NextResponse.json({ errorKey: "errorSlotLocked" }, { status: 409 });
 
-      const conflict = await hasRoomConflict(room, slotStart, slotEnd);
+      const conflict = await hasRoomConflict(room, slotStart, slotEnd)
+        || await hasMeetingRoomConflict(room, slotStart, slotEnd);
       if (conflict) {
         return NextResponse.json({ errorKey: "errorSlotTaken" }, { status: 409 });
       }

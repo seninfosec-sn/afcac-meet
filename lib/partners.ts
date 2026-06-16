@@ -100,6 +100,7 @@ export const PARTNERS: Partner[] = [
   { id: "ST_HANDLING",  name: "Direction",           organization: "ST HANDLING",       countryCode: "TG", email: "info@st-handling.aero" },
   { id: "ATNS",         name: "CEO",                 organization: "ATNS",              countryCode: "ZA", email: "info@atns.co.za" },
   { id: "AEROVAULT",    name: "CEO",                 organization: "Aerovault",         countryCode: "ZA", email: "info@aerovault.co.za" },
+  { id: "AVIASON",      name: "Direction",           organization: "AVIASON",           countryCode: "SN", email: "info@aviason.com" },
 ];
 
 export function getPartnersForCountry(countryCode: string): Partner[] {
