@@ -95,7 +95,7 @@ export default function NouvellePage() {
   const endTime = addMinutes(time, SLOT_DURATION);
 
   // Server-side occupied rooms (all users) — refreshed whenever date/time changes
-  const [serverOccupied, setServerOccupied] = useState<Set<string>>(new Set());
+  const [serverOccupied, setServerOccupied] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/rooms")
@@ -108,19 +108,19 @@ export default function NouvellePage() {
     let active = true;
     fetch(`/api/rooms/availability?date=${date}&startTime=${time}&endTime=${endTime}`)
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (active && data) setServerOccupied(new Set(data.occupiedRoomIds)); })
+      .then(data => { if (active && data) setServerOccupied(data.occupiedRoomIds ?? []); })
       .catch(() => {});
     return () => { active = false; };
   }, [date, time, endTime]);
 
-  const bookedRooms = useMemo(() =>
-    rooms.reduce<Record<string, boolean>>((acc, room) => {
-      acc[room.id] = serverOccupied.has(room.id)
+  const bookedRooms = useMemo(() => {
+    const occupied = new Set(serverOccupied);
+    return rooms.reduce<Record<string, boolean>>((acc, room) => {
+      acc[room.id] = occupied.has(room.id)
         || isRoomConflict(room.id, date, time, endTime, reservations);
       return acc;
-    }, {}),
-    [rooms, date, time, endTime, reservations, serverOccupied]
-  );
+    }, {});
+  }, [rooms, date, time, endTime, reservations, serverOccupied]);
 
   const roomDayCount = useMemo(() =>
     rooms.reduce<Record<string, number>>((acc, room) => {

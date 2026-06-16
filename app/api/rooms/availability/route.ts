@@ -46,10 +46,10 @@ export async function GET(req: NextRequest) {
       AND (end_time = '' OR end_time > ${startTime})
   `;
 
-  const occupied = new Set<string>();
-  for (const r of roomRows)   if (r.room_id) occupied.add(r.room_id as string);
-  for (const r of meetingRows) if (r.room_id) occupied.add(r.room_id as string);
-  for (const r of lockRows)   if (r.room_id) occupied.add(r.room_id as string);
+  const occupied: Record<string, true> = {};
+  for (const r of roomRows)    if (r.room_id) occupied[r.room_id as string] = true;
+  for (const r of meetingRows) if (r.room_id) occupied[r.room_id as string] = true;
+  for (const r of lockRows)    if (r.room_id) occupied[r.room_id as string] = true;
 
-  return NextResponse.json({ occupiedRoomIds: [...occupied] });
+  return NextResponse.json({ occupiedRoomIds: Object.keys(occupied) });
 }
